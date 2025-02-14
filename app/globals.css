@@ -1,0 +1,44 @@
+/* Importar las utilidades de Tailwind CSS */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Añadir tus estilos personalizados aquí */
+
+/* Ejemplo de uso correcto de variables CSS */
+:root {
+  --spacing: 1rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.grid-cols-custom {
+  grid-template-columns: var(--spacing) 1fr;
+}
+
+.grid-cols-\[5rem_1fr\] {
+  grid-template-columns: 5rem 1fr;
+}
+
+.grid-cols-\[1\.125rem_1fr\] {
+  grid-template-columns: 1.125rem 1fr;
+}
+
+.\[--gutter\:2rem\] {
+  --gutter: 2rem;
+}
+
+.\[--anchor-gap\:0\.5rem\] {
+  --anchor-gap: 0.5rem;
+}
