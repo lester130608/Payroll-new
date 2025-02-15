@@ -44,12 +44,12 @@ export default function Sidebar() {
           </li>
           <li>
             <Link
-              href="/users"
+              href="/employees"
               className={`block px-4 py-2 hover:bg-gray-700 ${
-                pathname === "/users" ? "bg-gray-700" : ""
+                pathname === "/employees" ? "bg-gray-700" : ""
               }`}
             >
-              Users
+              Employees
             </Link>
           </li>
         </ul>
