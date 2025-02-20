@@ -1,160 +1,187 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function CreateEmployeePage() {
   const router = useRouter();
+  const { data: session } = useSession();
 
   const [employeeData, setEmployeeData] = useState({
     name: "",
     email: "",
-    role: "Supervisor",
-    status: "Active",
     phone: "",
-    employeeType: "", // Solo aplicable para RBT, BCaBA, BCBA, TCM, Clinicians
-    supervisorType: "", // Solo aplicable para Supervisores
+    role: "Employee",
+    status: "active",
+    employee_type: "",
+    rate: "",
   });
 
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [supervisorId, setSupervisorId] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setEmployeeData({ ...employeeData, [e.target.name]: e.target.value });
+  useEffect(() => {
+    if (session?.user?.id) {
+      if (employeeData.role === "Supervisor" || employeeData.role === "Employee") {
+        setSupervisorId(session.user.id); // Admin como supervisor
+      } else if (["RBT", "BCaBA", "BCBA"].includes(employeeData.role)) {
+        fetchSupervisor("BA Supervisor");
+      } else if (employeeData.role === "TCM") {
+        fetchSupervisor("TCM Supervisor");
+      } else if (employeeData.role === "Clinician") {
+        fetchSupervisor("Clinicians Supervisor");
+      }
+    }
+  }, [employeeData.role, session]);
+
+  const fetchSupervisor = async (supervisorType: string) => {
+    const { data, error } = await supabase
+      .from("employees")
+      .select("id")
+      .eq("supervisor_type", supervisorType)
+      .eq("status", "active")
+      .limit(1);
+
+    if (data && data.length > 0) {
+      setSupervisorId(data[0].id);
+    } else {
+      console.error(`No supervisor found for ${supervisorType}`, error?.message);
+      setSupervisorId(null);
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setEmployeeData({ ...employeeData, [name]: value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Employee Created:", employeeData);
-    setIsSubmitted(true);
+
+    const { data, error } = await supabase.from("employees").insert([
+      {
+        ...employeeData,
+        supervisor_id: supervisorId,
+        rate: employeeData.rate ? parseFloat(employeeData.rate) : null,
+        employee_type: employeeData.role === "Employee" ? "Employee" : employeeData.employee_type || null,
+      },
+    ]);
+
+    if (error) {
+      console.error("Error creating employee:", error.message);
+    } else {
+      console.log("Employee Created:", data);
+      router.push("/employees");
+    }
   };
 
   return (
     <div className="p-8 bg-gray-100 min-h-screen flex flex-col items-center">
       <h1 className="text-3xl font-bold mb-6">Create New Employee</h1>
+      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg">
+        <div className="mb-4">
+          <label className="block font-medium">Full Name</label>
+          <input
+            type="text"
+            name="name"
+            value={employeeData.name}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+            required
+          />
+        </div>
 
-      {!isSubmitted ? (
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg">
+        <div className="mb-4">
+          <label className="block font-medium">Email</label>
+          <input
+            type="email"
+            name="email"
+            value={employeeData.email}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+            required
+          />
+        </div>
+
+        <div className="mb-4">
+          <label className="block font-medium">Phone</label>
+          <input
+            type="text"
+            name="phone"
+            value={employeeData.phone}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+          />
+        </div>
+
+        <div className="mb-4">
+          <label className="block font-medium">Role</label>
+          <select
+            name="role"
+            value={employeeData.role}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+          >
+            <option value="Supervisor">Supervisor</option>
+            <option value="Employee">Employee</option>
+            <option value="RBT">RBT</option>
+            <option value="BCaBA">BCaBA</option>
+            <option value="BCBA">BCBA</option>
+            <option value="TCM">TCM</option>
+            <option value="Clinician">Clinician</option>
+          </select>
+        </div>
+
+        {["RBT", "BCaBA", "BCBA"].includes(employeeData.role) && (
           <div className="mb-4">
-            <label className="block font-medium">Full Name</label>
-            <input
-              type="text"
-              name="name"
-              value={employeeData.name}
+            <label className="block font-medium">Type of Employee</label>
+            <select
+              name="employee_type"
+              value={employeeData.employee_type}
               onChange={handleChange}
               className="w-full p-2 border rounded"
               required
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="block font-medium">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={employeeData.email}
-              onChange={handleChange}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="block font-medium">Role</label>
-            <select name="role" value={employeeData.role} onChange={handleChange} className="w-full p-2 border rounded">
-              <option value="Administrator">Administrator</option>
-              <option value="Supervisor">Supervisor</option>
-              <option value="Employee">Employee</option>
+            >
+              <option value="">Select Type</option>
               <option value="RBT">RBT</option>
               <option value="BCaBA">BCaBA</option>
               <option value="BCBA">BCBA</option>
-              <option value="TCM">TCM</option>
-              <option value="Clinicians">Clinicians</option>
             </select>
           </div>
+        )}
 
-          {/* Si el rol es Supervisor, mostramos el tipo de supervisor */}
-          {employeeData.role === "Supervisor" && (
-            <div className="mb-4">
-              <label className="block font-medium">Supervisor Type</label>
-              <select
-                name="supervisorType"
-                value={employeeData.supervisorType}
-                onChange={handleChange}
-                className="w-full p-2 border rounded"
-                required
-              >
-                <option value="">Select Supervisor Type</option>
-                <option value="TCM Supervisor">TCM Supervisor</option>
-                <option value="Clinicians Supervisor">Clinicians Supervisor</option>
-                <option value="BA Supervisor">BA Supervisor</option>
-              </select>
-            </div>
-          )}
-
-          {/* Si selecciona RBT, BCaBA, BCBA, TCM, Clinicians, mostramos el tipo de empleado */}
-          {["RBT", "BCaBA", "BCBA", "TCM", "Clinicians"].includes(employeeData.role) && (
-            <div className="mb-4">
-              <label className="block font-medium">Type of Employee</label>
-              <select
-                name="employeeType"
-                value={employeeData.employeeType}
-                onChange={handleChange}
-                className="w-full p-2 border rounded"
-                required
-              >
-                <option value="">Select Employee Type</option>
-                <option value="RBT">RBT</option>
-                <option value="BCaBA">BCaBA</option>
-                <option value="BCBA">BCBA</option>
-                <option value="TCM">TCM</option>
-                <option value="Clinicians">Clinicians</option>
-              </select>
-            </div>
-          )}
-
+        {["RBT", "BCaBA", "BCBA", "Employee", "TCM"].includes(employeeData.role) && (
           <div className="mb-4">
-            <label className="block font-medium">Status</label>
-            <select name="status" value={employeeData.status} onChange={handleChange} className="w-full p-2 border rounded">
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-          </div>
-
-          <div className="mb-4">
-            <label className="block font-medium">Phone</label>
+            <label className="block font-medium">Rate</label>
             <input
-              type="text"
-              name="phone"
-              value={employeeData.phone}
+              type="number"
+              name="rate"
+              value={employeeData.rate}
               onChange={handleChange}
               className="w-full p-2 border rounded"
+              step="0.01"
             />
           </div>
+        )}
 
-          <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
-            Create Employee
-          </button>
-        </form>
-      ) : (
-        <div className="bg-white p-6 rounded-lg shadow-lg text-center w-full max-w-lg">
-          <h2 className="text-xl font-semibold mb-4">Employee Created Successfully!</h2>
-          <p className="text-gray-600 mb-6">What would you like to do next?</p>
-          <div className="flex gap-4">
-            <button
-              onClick={() => setIsSubmitted(false)}
-              className="flex-1 bg-green-600 text-white py-2 rounded hover:bg-green-700"
-            >
-              Create Another
-            </button>
-            <button
-              onClick={() => router.push("/employees")}
-              className="flex-1 bg-gray-600 text-white py-2 rounded hover:bg-gray-700"
-            >
-              Back to Employees
-            </button>
-          </div>
+        <div className="mb-4">
+          <label className="block font-medium">Status</label>
+          <select
+            name="status"
+            value={employeeData.status}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+          >
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
         </div>
-      )}
+
+        <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+          Create Employee
+        </button>
+      </form>
     </div>
   );
 }

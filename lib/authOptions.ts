@@ -1,58 +1,62 @@
-import { SupabaseAdapter } from "@next-auth/supabase-adapter";
-import type { NextAuthConfig } from "next-auth";
+import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { supabase } from "./supabaseClient";
+import { createClient } from "@supabase/supabase-js";
 
-export const authOptions: NextAuthConfig = {
-  adapter: SupabaseAdapter({
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    secret: process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  }),
+export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
-      name: "credentials",
+      name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        email: { label: "Email", type: "email", placeholder: "your@email.com" },
+        password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: credentials?.email!,
-          password: credentials?.password!,
-        });
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Email and password are required");
+        }
 
-        if (error || !data.user) {
-          throw new Error(error?.message || "Invalid credentials");
+        const supabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+
+        const { data: user, error } = await supabase
+          .from("users")
+          .select("id, email, role")
+          .eq("email", credentials.email)
+          .single();
+
+        if (error || !user) {
+          throw new Error("Invalid email or password");
         }
 
         return {
-          id: data.user.id,
-          email: data.user.email,
+          id: user.id,
+          email: user.email,
+          role: user.role
         };
-      },
-    }),
+      }
+    })
   ],
-  session: {
-    strategy: "jwt", // 🟢 ¡Esto es clave!
-  },
-  secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/auth/login",
   },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
-        token.email = user.email;
+        token.user = user;
       }
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string;
-        session.user.email = token.email as string;
+      if (token.user) {
+        session.user = token.user as any;
       }
       return session;
-    },
+    }
   },
+  session: {
+    strategy: "jwt"
+  },
+  secret: process.env.NEXTAUTH_SECRET
 };

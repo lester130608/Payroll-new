@@ -1,118 +1,130 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { supabase } from "@/lib/supabaseClient";
 
-interface EmployeeEntry {
-  id: number;
+interface Employee {
+  id: string;
   name: string;
-  weeks: { date: string; hours: string }[];
 }
 
-export default function NewPayrollPage() {
-  const router = useRouter();
+interface PayrollEntry {
+  employee_id: string;
+  hours: string;
+  date: string;
+}
 
-  const initialEmployees: EmployeeEntry[] = [
-    { id: 1, name: "Juan Pérez", weeks: [{ date: "", hours: "" }] },
-    { id: 2, name: "María López", weeks: [{ date: "", hours: "" }] },
-  ];
+export default function CreateTCMPayrollPage() {
+  const { data: session } = useSession();
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [payrollData, setPayrollData] = useState<PayrollEntry[]>([]);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const [employees, setEmployees] = useState<EmployeeEntry[]>(initialEmployees);
+  // Traemos los empleados activos de ese supervisor
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      if (!session?.user?.id) return;
 
-  const handleChange = (empId: number, weekIndex: number, field: string, value: string) => {
-    const updatedEmployees = employees.map((emp) => {
-      if (emp.id === empId) {
-        const updatedWeeks = emp.weeks.map((week, idx) =>
-          idx === weekIndex ? { ...week, [field]: value } : week
-        );
-        return { ...emp, weeks: updatedWeeks };
+      const { data, error } = await supabase
+        .from("employees")
+        .select("id, name")
+        .eq("status", "active")
+        .eq("role", "TCM")
+        .eq("supervisor_id", session.user.id);
+
+      if (error) {
+        console.error("Error fetching employees:", error.message);
+      } else {
+        setEmployees(data);
+        setPayrollData(data.map((emp) => ({ employee_id: emp.id, hours: "", date: "" })));
       }
-      return emp;
-    });
-    setEmployees(updatedEmployees);
+    };
+
+    fetchEmployees();
+  }, [session]);
+
+  const handleChange = (index: number, field: keyof PayrollEntry, value: string) => {
+    const updatedPayroll = [...payrollData];
+    updatedPayroll[index][field] = value;
+    setPayrollData(updatedPayroll);
   };
 
-  const addWeek = (empId: number) => {
-    const updatedEmployees = employees.map((emp) => {
-      if (emp.id === empId) {
-        return { ...emp, weeks: [...emp.weeks, { date: "", hours: "" }] };
-      }
-      return emp;
-    });
-    setEmployees(updatedEmployees);
-  };
+  const handleSubmit = async (final: boolean) => {
+    const { error } = await supabase.from("payroll_tcm").insert(
+      payrollData.map((entry) => ({
+        ...entry,
+        hours: entry.hours ? parseFloat(entry.hours) : null,
+        submitted: final,
+      }))
+    );
 
-  const handleSavePayroll = () => {
-    console.log("Payroll Guardado:", employees);
-    alert("Payroll guardado correctamente.");
-    router.push("/payroll"); // Opcional: redirigir a la página de Payroll
-  };
-
-  const handleSubmitPayroll = () => {
-    console.log("Payroll Enviado:", employees);
-    alert("Payroll enviado correctamente.");
-    router.push("/payroll"); // Opcional: redirigir a la página de Payroll
+    if (error) {
+      console.error("Error submitting payroll:", error.message);
+    } else {
+      setIsSubmitted(true);
+    }
   };
 
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
-      <h1 className="text-3xl font-bold mb-6">New Payroll</h1>
+      <h1 className="text-3xl font-bold mb-6">Create TCM Payroll</h1>
 
-      <div className="space-y-8">
-        {employees.map((employee) => (
-          <div key={employee.id} className="bg-white p-6 rounded-lg shadow-lg">
-            <h2 className="text-xl font-semibold mb-4">{employee.name}</h2>
+      {isSubmitted ? (
+        <div className="text-center bg-white p-6 rounded shadow">
+          <p className="text-green-600 font-semibold mb-4">Payroll Submitted Successfully!</p>
+        </div>
+      ) : (
+        <div className="bg-white p-6 rounded shadow">
+          <table className="w-full border-collapse border border-gray-300 mb-4">
+            <thead>
+              <tr className="bg-gray-200">
+                <th className="border px-4 py-2">Employee</th>
+                <th className="border px-4 py-2">Hours</th>
+                <th className="border px-4 py-2">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {payrollData.map((entry, index) => (
+                <tr key={index}>
+                  <td className="border px-4 py-2">{employees.find((e) => e.id === entry.employee_id)?.name}</td>
+                  <td className="border px-4 py-2">
+                    <input
+                      type="number"
+                      value={entry.hours}
+                      onChange={(e) => handleChange(index, "hours", e.target.value)}
+                      className="border p-1 w-20"
+                    />
+                  </td>
+                  <td className="border px-4 py-2">
+                    <input
+                      type="date"
+                      value={entry.date}
+                      onChange={(e) => handleChange(index, "date", e.target.value)}
+                      className="border p-1"
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
-            {employee.weeks.map((week, weekIndex) => (
-              <div key={weekIndex} className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block font-medium">Date</label>
-                  <input
-                    type="date"
-                    value={week.date}
-                    onChange={(e) => handleChange(employee.id, weekIndex, "date", e.target.value)}
-                    className="w-full p-2 border rounded"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-medium">Hours</label>
-                  <input
-                    type="number"
-                    value={week.hours}
-                    onChange={(e) => handleChange(employee.id, weekIndex, "hours", e.target.value)}
-                    className="w-full p-2 border rounded"
-                  />
-                </div>
-              </div>
-            ))}
-
+          <div className="flex gap-4">
             <button
-              type="button"
-              onClick={() => addWeek(employee.id)}
+              onClick={() => handleSubmit(false)}
+              className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
+            >
+              Save Payroll
+            </button>
+            <button
+              onClick={() => handleSubmit(true)}
               className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
             >
-              ➕ Add Week
+              Submit Payroll
             </button>
           </div>
-        ))}
-      </div>
-
-      <div className="flex gap-4 mt-8">
-        <button
-          onClick={handleSavePayroll}
-          className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
-        >
-          Save Payroll
-        </button>
-
-        <button
-          onClick={handleSubmitPayroll}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          Submit Payroll
-        </button>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

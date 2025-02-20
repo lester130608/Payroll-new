@@ -1,21 +1,46 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
+import { useRouter, useParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
-export default function CreateReportPage() {
+export default function ModifyReportPage() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const params = useParams();
+  const reportId = Array.isArray(params.id) ? params.id[0] : params.id;
 
   const [reportData, setReportData] = useState({
     name: "",
     description: "",
-    date: "", // Añadimos el campo de fecha
+    date: "",
   });
 
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  useEffect(() => {
+    async function fetchReport() {
+      const { data, error } = await supabase
+        .from("reports")
+        .select("id, name, description, date")
+        .eq("id", reportId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching report:", error.message);
+        return;
+      }
+
+      setReportData({
+        name: data.name,
+        description: data.description,
+        date: data.date,
+      });
+    }
+
+    if (reportId) {
+      fetchReport();
+    }
+  }, [reportId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setReportData({ ...reportData, [e.target.name]: e.target.value });
@@ -24,22 +49,17 @@ export default function CreateReportPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!session?.user?.id) {
-      console.error("User not authenticated");
-      return;
-    }
-
-    const { data, error } = await supabase.from("reports").insert([
-      {
+    const { error } = await supabase
+      .from("reports")
+      .update({
         name: reportData.name,
         description: reportData.description,
         date: reportData.date,
-        created_by: session.user.id,
-      },
-    ]);
+      })
+      .eq("id", reportId);
 
     if (error) {
-      console.error("Error creating report:", error.message);
+      console.error("Error updating report:", error.message);
     } else {
       setIsSubmitted(true);
     }
@@ -47,7 +67,7 @@ export default function CreateReportPage() {
 
   return (
     <div className="p-8 bg-gray-100 min-h-screen flex flex-col items-center">
-      <h1 className="text-3xl font-bold mb-6">Create Report</h1>
+      <h1 className="text-3xl font-bold mb-6">Modify Report</h1>
 
       {!isSubmitted ? (
         <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg">
@@ -88,12 +108,12 @@ export default function CreateReportPage() {
           </div>
 
           <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
-            Create Report
+            Update Report
           </button>
         </form>
       ) : (
         <div className="bg-white p-6 rounded-lg shadow-lg text-center w-full max-w-lg">
-          <h2 className="text-xl font-semibold mb-4">Report Created Successfully!</h2>
+          <h2 className="text-xl font-semibold mb-4">Report Updated Successfully!</h2>
           <div className="flex gap-4">
             <button onClick={() => router.push("/reports")} className="bg-gray-600 text-white py-2 px-4 rounded">
               Back to Reports

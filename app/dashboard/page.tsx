@@ -1,22 +1,24 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
-import { redirect } from "next/navigation";
+"use client";
 
-export default async function DashboardPage() {
-  const session = await getServerSession(authOptions);
+import { useSession } from "next-auth/react";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-  if (!session) {
-    redirect("/auth/login");
-  }
+export default function DashboardPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+    }
+  }, [status, router]);
+
+  if (status === "loading") return <p>Loading...</p>;
 
   return (
-    <div className="p-8 bg-gray-100 min-h-screen">
-      <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
-      <div className="bg-white p-6 rounded-lg shadow">
-        <p className="text-lg">
-          Welcome, <span className="font-semibold">{session.user?.email}</span>
-        </p>
-      </div>
+    <div>
+      <h1>Welcome to Dashboard</h1>
     </div>
   );
 }

@@ -1,25 +1,29 @@
 "use client";
 
-import { ReactNode } from 'react';
-import { SessionProvider } from 'next-auth/react';
-import Sidebar from '@/components/Sidebar';
-import { usePathname } from 'next/navigation';
-import './globals.css'; // <-- IMPORTANTE, este es el punto clave
+import { ReactNode } from "react";
+import { SessionProvider } from "next-auth/react";
+import Sidebar from "@/components/Sidebar";
+import Navbar from "@/components/Navbar";
+import { usePathname } from "next/navigation";
+import "./globals.css";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const isAuthPage = pathname.startsWith('/auth');
+  const isAuthPage = pathname.startsWith("/auth");
 
   return (
     <html lang="en">
-      <body>
+      <body className="bg-gray-50">
         <SessionProvider>
           {isAuthPage ? (
             <>{children}</>
           ) : (
-            <div className="flex min-h-screen bg-gray-50">
+            <div className="flex min-h-screen">
               <Sidebar />
-              <main className="flex-1 p-6">{children}</main>
+              <div className="flex-1 p-6">
+                <Navbar />
+                {children}
+              </div>
             </div>
           )}
         </SessionProvider>
