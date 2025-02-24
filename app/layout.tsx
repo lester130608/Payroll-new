@@ -20,7 +20,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           ) : (
             <div className="flex min-h-screen">
               <Sidebar />
-              <div className="flex-1 p-6">
+              <div className="flex-1 p-6 ml-64"> {/* 🔹 Agregamos `ml-64` para dejar espacio al Sidebar */}
                 <Navbar />
                 {children}
               </div>

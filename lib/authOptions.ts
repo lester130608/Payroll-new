@@ -22,36 +22,47 @@ export const authOptions: NextAuthOptions = {
 
         const { data: user, error } = await supabase
           .from("users")
-          .select("id, email, role")
+          .select("id, email, role, supervisor_code")
           .eq("email", credentials.email)
           .single();
 
+        console.log("🔍 User Data from Supabase:", user); // 🔍 Ver los datos obtenidos de Supabase
+
         if (error || !user) {
+          console.error("❌ Error fetching user:", error?.message);
           throw new Error("Invalid email or password");
         }
 
         return {
           id: user.id,
           email: user.email,
-          role: user.role
+          role: user.role || "employee", // ✅ Aseguramos que `role` siempre tenga un valor
+          supervisor_code: user.supervisor_code || null
         };
       }
     })
   ],
   pages: {
-    signIn: "/auth/login",
+    signIn: "/auth/login"
   },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.user = user;
+        token.id = user.id;
+        token.role = user.role || "employee"; // ✅ Aseguramos que `role` siempre esté presente
+        token.supervisor_code = user.supervisor_code || null;
       }
       return token;
     },
     async session({ session, token }) {
-      if (token.user) {
-        session.user = token.user as any;
+      if (token) {
+        session.user = {
+          id: token.id,
+          role: token.role || "employee", // ✅ Aseguramos que `session.user.role` tenga un valor correcto
+          supervisor_code: token.supervisor_code || null
+        };
       }
+      console.log("🟢 Session Data Sent:", session); // 🔍 Ver la sesión generada
       return session;
     }
   },
