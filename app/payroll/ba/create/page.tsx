@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { getEmployeesForSupervisor } from "@/lib/payrollService";
-import PayrollForm from "@/components/PayrollForm";
+import { getEmployeesForSupervisor } from "@/lib/payrollService"; 
+import PayrollFormBA from "@/components/PayrollFormBA"; // 🛠 Asegúrate de usar el formulario correcto
 
 export default function CreateBAPayrollPage() {
-  const { data: session, status } = useSession();
-  const [employees, setEmployees] = useState<{ id: string; name: string }[]>([]);
+  const { data: session } = useSession();
+  const [employees, setEmployees] = useState([]);
 
   useEffect(() => {
     if (session?.user) {
@@ -46,7 +46,7 @@ export default function CreateBAPayrollPage() {
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
       <h1 className="text-3xl font-bold mb-6">Create BA Payroll</h1>
-      <PayrollForm employees={employees} employeeType="ba" onSave={handleSave} onSubmit={handleSubmit} />
+      <PayrollFormBA employees={employees} employeeType="ba" onSave={handleSave} onSubmit={handleSubmit} />
     </div>
   );
 }
