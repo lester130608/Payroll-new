@@ -14,12 +14,19 @@ interface PayrollEntry {
   total_pay: number;
 }
 
-export default function PayrollFormEmployee({ employees, onSave, onSubmit }) {
+export default function PayrollFormEmployee({
+  employees = [],
+  onSave,
+  onSubmit,
+}: {
+  employees: Employee[];
+  onSave: (data: PayrollEntry[]) => void;
+  onSubmit: (data: PayrollEntry[]) => void;
+}) {
   const [payrollData, setPayrollData] = useState<PayrollEntry[]>([]);
 
-  // 📌 Mostrar en consola los empleados recibidos
+  // 📌 Inicializar payrollData cuando cambia employees
   useEffect(() => {
-    console.log("📌 Empleados recibidos en PayrollFormEmployee:", employees);
     if (employees.length > 0) {
       setPayrollData(
         employees.map((emp) => ({
@@ -32,16 +39,20 @@ export default function PayrollFormEmployee({ employees, onSave, onSubmit }) {
   }, [employees]);
 
   const handleChange = (index: number, field: keyof PayrollEntry, value: string) => {
-    const updatedPayroll = [...payrollData];
-    updatedPayroll[index][field] = value;
-
-    // Calcular `total_pay` automáticamente
-    const employee = employees.find((e) => e.id === updatedPayroll[index].employee_id);
-    if (employee) {
-      updatedPayroll[index].total_pay = parseFloat(value) * employee.rate;
-    }
-
-    setPayrollData(updatedPayroll);
+    setPayrollData((prev) =>
+      prev.map((entry, i) =>
+        i === index
+          ? {
+              ...entry,
+              [field]: value,
+              total_pay:
+                field === "hours"
+                  ? Math.max(0, parseFloat(value) || 0) * (employees[i]?.rate || 0)
+                  : entry.total_pay,
+            }
+          : entry
+      )
+    );
   };
 
   return (
@@ -57,19 +68,18 @@ export default function PayrollFormEmployee({ employees, onSave, onSubmit }) {
         <tbody>
           {payrollData.length > 0 ? (
             payrollData.map((entry, index) => (
-              <tr key={index}>
-                <td className="border px-4 py-2">
-                  {employees.find((e) => e.id === entry.employee_id)?.name}
-                </td>
+              <tr key={`${entry.employee_id}-${index}`}>
+                <td className="border px-4 py-2">{employees[index]?.name || "Unknown"}</td>
                 <td className="border px-4 py-2">
                   <input
                     type="number"
+                    min="0"
                     value={entry.hours}
                     onChange={(e) => handleChange(index, "hours", e.target.value)}
                     className="border p-1 w-20"
                   />
                 </td>
-                <td className="border px-4 py-2">{entry.total_pay.toFixed(2)}</td>
+                <td className="border px-4 py-2">${entry.total_pay.toFixed(2)}</td>
               </tr>
             ))
           ) : (

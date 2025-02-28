@@ -10,6 +10,18 @@ interface Employee {
   status: string;
 }
 
+// Definir interfaz para Payroll
+interface Payroll {
+  id: string;
+  employee_id: string;
+  supervisor_id: string;
+  date: string;
+  hours_worked: number;
+  services_completed: number;
+  status: string;
+  created_at: string;
+}
+
 // 🔍 Obtener empleados según el rol del supervisor
 export const getEmployeesForSupervisor = async (
   supervisorId: string,
@@ -39,18 +51,21 @@ export const getEmployeesForSupervisor = async (
       .in("employee_type", employeeTypes)
       .eq("supervisor_id", supervisorId);
 
-    if (error) throw error;
+    if (error) {
+      console.error("❌ Error obteniendo empleados:", error);
+      return [];
+    }
 
     console.log("✅ Empleados encontrados:", data);
     return data || [];
   } catch (error) {
-    console.error("❌ Error obteniendo empleados:", error);
+    console.error("❌ Error inesperado obteniendo empleados:", error);
     return [];
   }
 };
 
 // 🔍 Obtener Payroll General
-export const getTotalPayroll = async (): Promise<Employee[]> => {
+export const getTotalPayroll = async (): Promise<Payroll[]> => {
   console.log("🔍 Obteniendo datos de Payroll General...");
 
   try {
@@ -59,12 +74,15 @@ export const getTotalPayroll = async (): Promise<Employee[]> => {
       .select("id, employee_id, supervisor_id, date, hours_worked, services_completed, status, created_at")
       .eq("status", "pending");
 
-    if (error) throw error;
+    if (error) {
+      console.error("❌ Error obteniendo Payroll General:", error);
+      return [];
+    }
 
     console.log("✅ Payroll General obtenido:", data);
     return data || [];
   } catch (error) {
-    console.error("❌ Error obteniendo Payroll General:", error);
+    console.error("❌ Error inesperado obteniendo Payroll General:", error);
     return [];
   }
 };
@@ -74,17 +92,26 @@ export const approveAllPayroll = async (): Promise<boolean> => {
   console.log("✅ Aprobando todos los Payroll pendientes...");
 
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("payroll")
       .update({ status: "approved" })
-      .eq("status", "pending");
+      .eq("status", "pending")
+      .select();
 
-    if (error) throw error;
+    if (error) {
+      console.error("❌ Error aprobando Payroll:", error);
+      return false;
+    }
 
-    console.log("✅ Todos los Payroll han sido aprobados.");
+    if (!data || data.length === 0) {
+      console.warn("⚠️ No hay payrolls pendientes por aprobar.");
+      return false;
+    }
+
+    console.log(`✅ ${data.length} Payrolls han sido aprobados.`);
     return true;
   } catch (error) {
-    console.error("❌ Error aprobando Payroll:", error);
+    console.error("❌ Error inesperado aprobando Payroll:", error);
     return false;
   }
 };

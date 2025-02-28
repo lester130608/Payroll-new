@@ -13,12 +13,18 @@ interface PayrollEntry {
   date: string;
 }
 
-export default function PayrollFormTCM({ employees, onSave, onSubmit }) {
+export default function PayrollFormTCM({
+  employees = [],
+  onSave,
+  onSubmit,
+}: {
+  employees: Employee[];
+  onSave: (data: PayrollEntry[]) => void;
+  onSubmit: (data: PayrollEntry[]) => void;
+}) {
   const [payrollData, setPayrollData] = useState<PayrollEntry[]>([]);
 
-  // 📌 Mostrar en consola los empleados recibidos
   useEffect(() => {
-    console.log("📌 Empleados recibidos en PayrollFormTCM:", employees);
     if (employees.length > 0) {
       setPayrollData(
         employees.map((emp) => ({
@@ -31,19 +37,25 @@ export default function PayrollFormTCM({ employees, onSave, onSubmit }) {
   }, [employees]);
 
   const handleChange = (index: number, field: keyof PayrollEntry, value: string) => {
-    const updatedPayroll = [...payrollData];
-    updatedPayroll[index][field] = value;
-    setPayrollData(updatedPayroll);
+    setPayrollData((prev) =>
+      prev.map((entry, i) => (i === index ? { ...entry, [field]: value } : entry))
+    );
   };
 
   const handleAddWeek = (index: number) => {
-    const updatedPayroll = [...payrollData];
-    updatedPayroll.splice(index + 1, 0, {
-      employee_id: payrollData[index].employee_id,
-      hours: "",
-      date: "",
-    });
-    setPayrollData(updatedPayroll);
+    if (index < 0 || index >= payrollData.length) return; // Prevención de errores
+    const currentEntry = payrollData[index];
+    if (!currentEntry) return;
+
+    setPayrollData((prev) => [
+      ...prev.slice(0, index + 1),
+      {
+        employee_id: currentEntry.employee_id,
+        hours: "",
+        date: "",
+      },
+      ...prev.slice(index + 1),
+    ]);
   };
 
   return (
@@ -60,13 +72,12 @@ export default function PayrollFormTCM({ employees, onSave, onSubmit }) {
         <tbody>
           {payrollData.length > 0 ? (
             payrollData.map((entry, index) => (
-              <tr key={index}>
-                <td className="border px-4 py-2">
-                  {employees.find((e) => e.id === entry.employee_id)?.name}
-                </td>
+              <tr key={`${entry.employee_id}-${index}`}>
+                <td className="border px-4 py-2">{employees[index]?.name || "Unknown"}</td>
                 <td className="border px-4 py-2">
                   <input
                     type="number"
+                    min="0"
                     value={entry.hours}
                     onChange={(e) => handleChange(index, "hours", e.target.value)}
                     className="border p-1 w-20"

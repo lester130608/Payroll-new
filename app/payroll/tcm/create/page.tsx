@@ -16,18 +16,15 @@ export default function CreateTCMPayrollPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
 
   useEffect(() => {
-    if (session?.user) {
-      console.log("📌 Rol del usuario en sesión:", session.user.role);
-      console.log("📌 ID del usuario en sesión:", session.user.id);
+    const userId = session?.user?.id;
+    const userRole = session?.user?.role;
 
-      getEmployeesForSupervisor(session.user.id, session.user.role).then(
-        (data: Employee[]) => {
-          console.log("📌 Empleados recibidos en TCM Payroll:", data);
-          setEmployees(data);
-        }
-      );
+    if (userId && userRole) {
+      getEmployeesForSupervisor(userId, userRole)
+        .then((data: Employee[]) => setEmployees(data))
+        .catch((error) => console.error("Error al obtener empleados:", error));
     }
-  }, [session]);
+  }, [session?.user?.id, session?.user?.role]);
 
   return (
     <div className="p-8 bg-gray-100 min-h-screen">

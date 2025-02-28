@@ -19,12 +19,18 @@ interface PayrollEntry {
   tp_review: string;
 }
 
-export default function PayrollFormClinicians({ employees, onSave, onSubmit }) {
+export default function PayrollFormClinicians({
+  employees = [],
+  onSave,
+  onSubmit,
+}: {
+  employees: Employee[];
+  onSave: (data: PayrollEntry[]) => void;
+  onSubmit: (data: PayrollEntry[]) => void;
+}) {
   const [payrollData, setPayrollData] = useState<PayrollEntry[]>([]);
 
-  // 📌 Mostrar en consola los empleados recibidos
   useEffect(() => {
-    console.log("📌 Empleados recibidos en PayrollFormClinicians:", employees);
     if (employees.length > 0) {
       setPayrollData(
         employees.map((emp) => ({
@@ -43,9 +49,9 @@ export default function PayrollFormClinicians({ employees, onSave, onSubmit }) {
   }, [employees]);
 
   const handleChange = (index: number, field: keyof PayrollEntry, value: string) => {
-    const updatedPayroll = [...payrollData];
-    updatedPayroll[index][field] = value;
-    setPayrollData(updatedPayroll);
+    setPayrollData((prev) =>
+      prev.map((entry, i) => (i === index ? { ...entry, [field]: value } : entry))
+    );
   };
 
   return (
@@ -67,74 +73,21 @@ export default function PayrollFormClinicians({ employees, onSave, onSubmit }) {
         <tbody>
           {payrollData.length > 0 ? (
             payrollData.map((entry, index) => (
-              <tr key={index}>
-                <td className="border px-4 py-2">
-                  {employees.find((e) => e.id === entry.employee_id)?.name}
-                </td>
-                <td className="border px-4 py-2">
-                  <input
-                    type="number"
-                    value={entry.it}
-                    onChange={(e) => handleChange(index, "it", e.target.value)}
-                    className="border p-1 w-16"
-                  />
-                </td>
-                <td className="border px-4 py-2">
-                  <input
-                    type="number"
-                    value={entry.bio}
-                    onChange={(e) => handleChange(index, "bio", e.target.value)}
-                    className="border p-1 w-16"
-                  />
-                </td>
-                <td className="border px-4 py-2">
-                  <input
-                    type="number"
-                    value={entry.tp}
-                    onChange={(e) => handleChange(index, "tp", e.target.value)}
-                    className="border p-1 w-16"
-                  />
-                </td>
-                <td className="border px-4 py-2">
-                  <input
-                    type="number"
-                    value={entry.intake}
-                    onChange={(e) => handleChange(index, "intake", e.target.value)}
-                    className="border p-1 w-16"
-                  />
-                </td>
-                <td className="border px-4 py-2">
-                  <input
-                    type="number"
-                    value={entry.in_depth_bio}
-                    onChange={(e) => handleChange(index, "in_depth_bio", e.target.value)}
-                    className="border p-1 w-16"
-                  />
-                </td>
-                <td className="border px-4 py-2">
-                  <input
-                    type="number"
-                    value={entry.in_depth_intake}
-                    onChange={(e) => handleChange(index, "in_depth_intake", e.target.value)}
-                    className="border p-1 w-16"
-                  />
-                </td>
-                <td className="border px-4 py-2">
-                  <input
-                    type="number"
-                    value={entry.in_depth_existing}
-                    onChange={(e) => handleChange(index, "in_depth_existing", e.target.value)}
-                    className="border p-1 w-16"
-                  />
-                </td>
-                <td className="border px-4 py-2">
-                  <input
-                    type="number"
-                    value={entry.tp_review}
-                    onChange={(e) => handleChange(index, "tp_review", e.target.value)}
-                    className="border p-1 w-16"
-                  />
-                </td>
+              <tr key={`${entry.employee_id}-${index}`}>
+                <td className="border px-4 py-2">{employees[index]?.name || "Unknown"}</td>
+                {["it", "bio", "tp", "intake", "in_depth_bio", "in_depth_intake", "in_depth_existing", "tp_review"].map(
+                  (field) => (
+                    <td key={field} className="border px-4 py-2">
+                      <input
+                        type="number"
+                        value={entry[field as keyof PayrollEntry]}
+                        onChange={(e) => handleChange(index, field as keyof PayrollEntry, e.target.value)}
+                        className="border p-1 w-16"
+                        min="0"
+                      />
+                    </td>
+                  )
+                )}
               </tr>
             ))
           ) : (

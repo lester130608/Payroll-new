@@ -3,14 +3,25 @@
 import { useState, useEffect } from "react";
 import { fetchReports } from "@/lib/reportsService";
 
+interface Report {
+  id: string;
+  title: string;
+}
+
 export default function ReportsCreatePage() {
-  const [reports, setReports] = useState([]);
+  const [reports, setReports] = useState<Report[]>([]);
 
   useEffect(() => {
-    fetchReports().then((data) => {
-      console.log("✅ Report data received:", data);
-      setReports(data);
-    });
+    fetchReports()
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setReports(data);
+        } else {
+          console.error("❌ Unexpected data format:", data);
+          setReports([]);
+        }
+      })
+      .catch((error) => console.error("❌ Error fetching reports:", error));
   }, []);
 
   return (
@@ -18,8 +29,8 @@ export default function ReportsCreatePage() {
       <h1 className="text-3xl font-bold mb-6">Reports</h1>
       {reports.length > 0 ? (
         <ul>
-          {reports.map((report, index) => (
-            <li key={index}>{report.title}</li>
+          {reports.map((report) => (
+            <li key={report.id}>{report.title}</li>
           ))}
         </ul>
       ) : (

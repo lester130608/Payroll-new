@@ -17,11 +17,12 @@ export default function CreateBAPayrollPage() {
 
   useEffect(() => {
     if (session?.user) {
-      getEmployeesForSupervisor(session.user.id, session.user.role).then((data: Employee[]) => {
-        setEmployees(data);
-      });
+      const { id, role } = session.user;
+      getEmployeesForSupervisor(id, role)
+        .then((data: Employee[]) => setEmployees(data))
+        .catch((error) => console.error("Error fetching employees:", error));
     }
-  }, [session]);
+  }, [session?.user?.id, session?.user?.role]);
 
   return (
     <div className="p-8 bg-gray-100 min-h-screen">

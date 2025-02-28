@@ -7,12 +7,25 @@ interface Employee {
   name: string;
 }
 
-export default function PayrollFormBA({ employees }: { employees: Employee[] }) {
-  const [payrollData, setPayrollData] = useState<Record<string, string>[]>([]);
+interface PayrollEntry {
+  employee_id: string;
+  hours: string;
+}
+
+export default function PayrollFormBA({ employees = [] }: { employees: Employee[] }) {
+  const [payrollData, setPayrollData] = useState<PayrollEntry[]>([]);
 
   useEffect(() => {
-    setPayrollData(employees.map((emp) => ({ employee_id: emp.id, hours: "" })));
+    if (employees.length > 0) {
+      setPayrollData(employees.map((emp) => ({ employee_id: emp.id, hours: "" })));
+    }
   }, [employees]);
+
+  const handleHoursChange = (index: number, value: string) => {
+    setPayrollData((prev) =>
+      prev.map((entry, i) => (i === index ? { ...entry, hours: value } : entry))
+    );
+  };
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg">
@@ -25,25 +38,22 @@ export default function PayrollFormBA({ employees }: { employees: Employee[] }) 
         </thead>
         <tbody>
           {payrollData.length > 0 ? (
-            payrollData.map((entry, index) => (
-              <tr key={index}>
-                <td className="border px-4 py-2">{employees[index].name}</td>
-                <td className="border px-4 py-2">
-                  <input
-                    type="number"
-                    value={entry.hours}
-                    onChange={(e) =>
-                      setPayrollData((prev) => {
-                        const newPayroll = [...prev];
-                        newPayroll[index].hours = e.target.value;
-                        return newPayroll;
-                      })
-                    }
-                    className="border p-1 w-16"
-                  />
-                </td>
-              </tr>
-            ))
+            payrollData.map((entry, index) =>
+              employees[index] ? (
+                <tr key={employees[index]?.id || `row-${index}`}>
+                  <td className="border px-4 py-2">{employees[index]?.name || "Unknown"}</td>
+                  <td className="border px-4 py-2">
+                    <input
+                      type="number"
+                      value={entry.hours}
+                      onChange={(e) => handleHoursChange(index, e.target.value)}
+                      className="border p-1 w-16"
+                      min="0"
+                    />
+                  </td>
+                </tr>
+              ) : null
+            )
           ) : (
             <tr>
               <td colSpan={2} className="border px-4 py-2 text-center text-gray-500">

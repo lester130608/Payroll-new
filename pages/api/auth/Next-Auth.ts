@@ -10,22 +10,34 @@ export default NextAuth({
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          console.error("❌ Error: Credenciales faltantes");
+          throw new Error("Missing credentials");
+        }
+
         try {
-          const res = await fetch("https://api.example.com/auth/login", {
+          const res = await fetch(process.env.NEXT_PUBLIC_API_AUTH_URL || "https://api.example.com/auth/login", {
             method: "POST",
-            body: JSON.stringify(credentials),
+            body: JSON.stringify({ email: credentials.email, password: credentials.password }),
             headers: { "Content-Type": "application/json" }
           });
 
-          if (!res.ok) throw new Error("Invalid credentials");
+          if (!res.ok) {
+            const errorResponse = await res.json();
+            console.error("❌ Error en autenticación:", errorResponse);
+            throw new Error(errorResponse.message || "Invalid credentials");
+          }
 
           const user = await res.json();
           return user;
         } catch (error) {
           console.error("❌ Error en autorización:", error);
-          return null;
+          throw new Error("Authentication failed");
         }
       }
     })
-  ]
+  ],
+  pages: {
+    signIn: "/auth/login", // Redirección en caso de fallo
+  }
 });
