@@ -2,43 +2,36 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { getEmployeesForSupervisor } from "@/lib/payrollService"; 
-import PayrollFormBA from "@/components/PayrollFormBA"; // 🛠 Asegúrate de usar el formulario correcto
+import { getEmployeesForSupervisor } from "@/lib/payrollService";
+import PayrollFormBA from "@/components/PayrollFormBA";
+
+interface Employee {
+  id: string;
+  name: string;
+}
 
 export default function CreateBAPayrollPage() {
   const { data: session } = useSession();
-  const [employees, setEmployees] = useState([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
 
   useEffect(() => {
     if (session?.user) {
       console.log("📌 Rol del usuario en sesión:", session.user.role);
       console.log("📌 ID del usuario en sesión:", session.user.id);
-
-      getEmployeesForSupervisor(session.user.id, session.user.role).then((data) => {
-        console.log("📌 Empleados recibidos en BA Payroll:", data);
-        setEmployees(data);
+      
+      getEmployeesForSupervisor(session.user.id, session.user.role).then((employees) => {
+        console.log("📌 Empleados recibidos en BA Payroll:", employees);
+        setEmployees(employees);
       });
     }
   }, [session]);
 
-  const handleSave = (data: any) => {
+  const handleSave = (data: Employee[]) => {
     console.log("BA Payroll saved as Draft:", data);
     alert("Payroll saved successfully!");
   };
 
-  const handleSubmit = (data: any) => {
-    const hasErrors = data.some(
-      (entry: any) =>
-        !entry.hours ||
-        parseFloat(entry.hours) <= 0 ||
-        (entry.services_completed && entry.services_completed.trim() === "")
-    );
-
-    if (hasErrors) {
-      alert("Please enter valid hours and services before submitting.");
-      return;
-    }
-
+  const handleSubmit = (data: Employee[]) => {
     console.log("BA Payroll submitted as Final:", data);
     alert("Payroll submitted successfully!");
   };
@@ -46,7 +39,7 @@ export default function CreateBAPayrollPage() {
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
       <h1 className="text-3xl font-bold mb-6">Create BA Payroll</h1>
-      <PayrollFormBA employees={employees} employeeType="ba" onSave={handleSave} onSubmit={handleSubmit} />
+      <PayrollFormBA employees={employees} onSave={handleSave} onSubmit={handleSubmit} />
     </div>
   );
 }
