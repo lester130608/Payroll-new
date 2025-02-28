@@ -18,7 +18,7 @@ export default function CreateEmployeePayrollPage() {
     if (session?.user) {
       console.log("📌 Rol del usuario en sesión:", session.user.role);
       console.log("📌 ID del usuario en sesión:", session.user.id);
-      
+
       getEmployeesForSupervisor(session.user.id, session.user.role).then((employees) => {
         console.log("📌 Empleados recibidos en Employee Payroll:", employees);
         setEmployees(employees);
