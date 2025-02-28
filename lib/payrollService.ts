@@ -64,6 +64,75 @@ export const getEmployeesForSupervisor = async (
   }
 };
 
+// 🔍 Obtener Payroll de un empleado
+export const getEmployeePayroll = async (employeeId: string): Promise<Payroll[]> => {
+  console.log("🔍 Obteniendo Payroll para empleado:", employeeId);
+
+  try {
+    const { data, error } = await supabase
+      .from("payroll")
+      .select("*")
+      .eq("employee_id", employeeId);
+
+    if (error) {
+      console.error("❌ Error obteniendo Payroll del empleado:", error);
+      return [];
+    }
+
+    console.log("✅ Payroll obtenido:", data);
+    return data || [];
+  } catch (error) {
+    console.error("❌ Error inesperado obteniendo Payroll:", error);
+    return [];
+  }
+};
+
+// ✅ Actualizar datos de Payroll de un empleado
+export const updateEmployeePayroll = async (payrollId: string, updates: Partial<Payroll>): Promise<boolean> => {
+  console.log("📝 Actualizando Payroll con ID:", payrollId);
+
+  try {
+    const { error } = await supabase
+      .from("payroll")
+      .update(updates)
+      .eq("id", payrollId);
+
+    if (error) {
+      console.error("❌ Error actualizando Payroll:", error);
+      return false;
+    }
+
+    console.log("✅ Payroll actualizado correctamente.");
+    return true;
+  } catch (error) {
+    console.error("❌ Error inesperado actualizando Payroll:", error);
+    return false;
+  }
+};
+
+// ❌ Rechazar un Payroll
+export const rejectPayrollEntry = async (payrollId: string): Promise<boolean> => {
+  console.log("❌ Rechazando Payroll con ID:", payrollId);
+
+  try {
+    const { error } = await supabase
+      .from("payroll")
+      .update({ status: "rejected" })
+      .eq("id", payrollId);
+
+    if (error) {
+      console.error("❌ Error rechazando Payroll:", error);
+      return false;
+    }
+
+    console.log("✅ Payroll rechazado correctamente.");
+    return true;
+  } catch (error) {
+    console.error("❌ Error inesperado rechazando Payroll:", error);
+    return false;
+  }
+};
+
 // 🔍 Obtener Payroll General
 export const getTotalPayroll = async (): Promise<Payroll[]> => {
   console.log("🔍 Obteniendo datos de Payroll General...");
