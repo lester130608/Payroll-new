@@ -1,14 +1,25 @@
 import { supabase } from "./supabaseClient";
 
+interface Employee {
+  id: string;
+  name: string;
+  employee_type: string;
+  supervisor_id: string;
+  status: string;
+}
+
 // Obtener empleados para el supervisor
-export const getEmployeesForSupervisor = async (supervisorId: string, role: string) => {
+export const getEmployeesForSupervisor = async (
+  supervisorId: string,
+  role: string
+): Promise<Employee[]> => {
   console.log("🔍 Buscando empleados para supervisor:", supervisorId, "Rol:", role);
 
   const roleMapping: { [key: string]: string[] } = {
     "supervisor_ba": ["rbt", "bcba", "bcaba"],
     "supervisor_tcm": ["tcm"],
     "supervisor_clinician": ["clinicians"],
-    "admin": ["employee"]
+    "admin": ["employee"],
   };
 
   const employeeTypes = roleMapping[role];
@@ -31,5 +42,5 @@ export const getEmployeesForSupervisor = async (supervisorId: string, role: stri
   }
 
   console.log("✅ Empleados encontrados:", data);
-  return data;
+  return data as Employee[];
 };
