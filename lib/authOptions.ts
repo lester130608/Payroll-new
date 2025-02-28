@@ -29,7 +29,10 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
+        console.log("🔍 Credenciales recibidas:", credentials);
+
         if (!credentials?.email || !credentials?.password) {
+          console.error("❌ Faltan credenciales.");
           throw new Error("Email and password are required");
         }
 
@@ -38,16 +41,18 @@ export const authOptions: NextAuthOptions = {
           process.env.SUPABASE_SERVICE_ROLE_KEY!
         );
 
+        console.log("🔗 Conectando con Supabase...");
+        
         const { data: user, error } = await supabase
           .from("users")
           .select("id, email, role, supervisor_code")
           .eq("email", credentials.email)
           .single();
 
-        console.log("🔍 User Data from Supabase:", user);
+        console.log("🔍 Respuesta de Supabase:", { user, error });
 
         if (error || !user) {
-          console.error("❌ Error fetching user:", error?.message);
+          console.error("❌ Error al obtener usuario de Supabase:", error?.message);
           throw new Error("Invalid email or password");
         }
 
@@ -66,9 +71,10 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        console.log("🔑 JWT generado para usuario:", user);
         token.id = String(user.id);
         token.role = typeof user.role === "string" ? user.role : "employee";
-        token.supervisor_code = typeof user.supervisor_code === "string" ? user.supervisor_code : null; // ✅ Validamos `supervisor_code`
+        token.supervisor_code = typeof user.supervisor_code === "string" ? user.supervisor_code : null;
       }
       return token;
     },
@@ -77,10 +83,10 @@ export const authOptions: NextAuthOptions = {
         session.user = {
           id: String(token.id),
           role: typeof token.role === "string" ? token.role : "employee",
-          supervisor_code: typeof token.supervisor_code === "string" ? token.supervisor_code : null, // ✅ Validamos `supervisor_code`
+          supervisor_code: typeof token.supervisor_code === "string" ? token.supervisor_code : null,
         };
       }
-      console.log("🟢 Session Data Sent:", session);
+      console.log("🟢 Sesión generada:", session);
       return session;
     },
   },
