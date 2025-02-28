@@ -1,6 +1,6 @@
 import { supabase } from "./supabaseClient";
 
-// Definimos la interfaz de un empleado para evitar el uso de `any`
+// Definir la interfaz Employee
 interface Employee {
   id: string;
   name: string;
@@ -43,8 +43,8 @@ export const getEmployeesForSupervisor = async (
 
     console.log("✅ Empleados encontrados:", data);
     return data || [];
-  } catch (error: any) {
-    console.error("❌ Error obteniendo empleados:", error.message);
+  } catch (error) {
+    console.error("❌ Error obteniendo empleados:", error);
     return [];
   }
 };
@@ -63,8 +63,8 @@ export const getTotalPayroll = async (): Promise<any[]> => {
 
     console.log("✅ Payroll General obtenido:", data);
     return data || [];
-  } catch (error: any) {
-    console.error("❌ Error obteniendo Payroll General:", error.message);
+  } catch (error) {
+    console.error("❌ Error obteniendo Payroll General:", error);
     return [];
   }
 };
@@ -83,8 +83,8 @@ export const getEmployeePayroll = async (): Promise<any[]> => {
 
     console.log("✅ Payroll de empleados obtenido:", data);
     return data || [];
-  } catch (error: any) {
-    console.error("❌ Error obteniendo Payroll de empleados:", error.message);
+  } catch (error) {
+    console.error("❌ Error obteniendo Payroll de empleados:", error);
     return [];
   }
 };
@@ -103,8 +103,8 @@ export const rejectPayrollEntry = async (payrollId: string, reason: string): Pro
 
     console.log("✅ Payroll rechazado correctamente.");
     return true;
-  } catch (error: any) {
-    console.error("❌ Error rechazando Payroll:", error.message);
+  } catch (error) {
+    console.error("❌ Error rechazando Payroll:", error);
     return false;
   }
 };
@@ -123,8 +123,8 @@ export const approveAllPayroll = async (): Promise<boolean> => {
 
     console.log("✅ Todos los Payroll han sido aprobados.");
     return true;
-  } catch (error: any) {
-    console.error("❌ Error aprobando Payroll:", error.message);
+  } catch (error) {
+    console.error("❌ Error aprobando Payroll:", error);
     return false;
   }
 };

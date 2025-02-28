@@ -1,23 +1,31 @@
-import { NextAuthOptions } from "next-auth";
+import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-export const authOptions: NextAuthOptions = {
+export default NextAuth({
   providers: [
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "email", placeholder: "example@example.com" },
-        password: { label: "Password", type: "password" },
+        email: { label: "Email", type: "text", placeholder: "jsmith@example.com" },
+        password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
         try {
-          const user = { id: "1", name: "User", email: credentials?.email };
+          const res = await fetch("https://api.example.com/auth/login", {
+            method: "POST",
+            body: JSON.stringify(credentials),
+            headers: { "Content-Type": "application/json" }
+          });
+
+          if (!res.ok) throw new Error("Invalid credentials");
+
+          const user = await res.json();
           return user;
         } catch (error) {
-          console.error("❌ Authentication error:", error);
+          console.error("❌ Error en autorización:", error);
           return null;
         }
-      },
-    }),
-  ],
-};
+      }
+    })
+  ]
+});
