@@ -16,30 +16,16 @@ export default function CreateCliniciansPayrollPage() {
 
   useEffect(() => {
     if (session?.user) {
-      console.log("📌 Rol del usuario en sesión:", session.user.role);
-      console.log("📌 ID del usuario en sesión:", session.user.id);
-
-      getEmployeesForSupervisor(session.user.id, session.user.role).then((employees) => {
-        console.log("📌 Empleados recibidos en Clinicians Payroll:", employees);
-        setEmployees(employees);
+      getEmployeesForSupervisor(session.user.id, session.user.role).then((data: Employee[]) => {
+        setEmployees(data);
       });
     }
   }, [session]);
 
-  const handleSave = (data: Employee[]) => {
-    console.log("Clinicians Payroll saved as Draft:", data);
-    alert("Payroll saved successfully!");
-  };
-
-  const handleSubmit = (data: Employee[]) => {
-    console.log("Clinicians Payroll submitted as Final:", data);
-    alert("Payroll submitted successfully!");
-  };
-
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
       <h1 className="text-3xl font-bold mb-6">Create Clinicians Payroll</h1>
-      <PayrollFormClinicians employees={employees} onSave={handleSave} onSubmit={handleSubmit} />
+      <PayrollFormClinicians employees={employees} />
     </div>
   );
 }
