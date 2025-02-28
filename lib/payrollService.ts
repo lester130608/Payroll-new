@@ -1,6 +1,6 @@
 import { supabase } from "./supabaseClient";
 
-// 🔍 Obtener empleados según el rol del usuario
+// 🔍 Obtener empleados según el rol del supervisor
 export const getEmployeesForSupervisor = async (supervisorId: string, role: string) => {
   console.log("🔍 Buscando empleados para supervisor:", supervisorId, "Rol:", role);
 
@@ -8,7 +8,7 @@ export const getEmployeesForSupervisor = async (supervisorId: string, role: stri
     "supervisor_ba": ["rbt", "bcba", "bcaba"],
     "supervisor_tcm": ["tcm"],
     "supervisor_clinician": ["clinicians"],
-    "admin": ["employee"]  // ✅ Admin solo ve empleados administrativos
+    "admin": ["employee"]
   };
 
   const employeeTypes = roleMapping[role];
@@ -18,17 +18,12 @@ export const getEmployeesForSupervisor = async (supervisorId: string, role: stri
     return [];
   }
 
-  let query = supabase
+  const { data, error } = await supabase
     .from("employees")
     .select("id, name, employee_type, supervisor_id, status")
     .eq("status", "active")
-    .in("employee_type", employeeTypes);
-
-  if (role !== "admin") {
-    query = query.eq("supervisor_id", supervisorId);
-  }
-
-  const { data, error } = await query;
+    .in("employee_type", employeeTypes)
+    .eq("supervisor_id", supervisorId);
 
   if (error) {
     console.error("❌ Error obteniendo empleados:", error.message);
@@ -57,15 +52,14 @@ export const getTotalPayroll = async () => {
   return data;
 };
 
-// 🔍 Obtener Payroll de empleados administrativos (Solo para Admin)
+// 🔍 Obtener Payroll de empleados (Solo para Admin)
 export const getEmployeePayroll = async () => {
   console.log("🔍 Obteniendo datos de Payroll de empleados...");
 
   const { data, error } = await supabase
     .from("payroll")
     .select("id, employee_id, supervisor_id, date, hours_worked, services_completed, status, created_at")
-    .eq("status", "pending")
-    .order("created_at", { ascending: false });
+    .eq("status", "pending");
 
   if (error) {
     console.error("❌ Error obteniendo Payroll de empleados:", error.message);
@@ -109,5 +103,23 @@ export const approveAllPayroll = async () => {
   }
 
   console.log("✅ Todos los Payroll han sido aprobados.");
+  return true;
+};
+
+// ✏ **Actualizar un Payroll específico**
+export const updateEmployeePayroll = async (payrollId: string, updates: any) => {
+  console.log("✏ Actualizando Payroll con ID:", payrollId, "Datos:", updates);
+
+  const { error } = await supabase
+    .from("payroll")
+    .update(updates)
+    .eq("id", payrollId);
+
+  if (error) {
+    console.error("❌ Error actualizando Payroll:", error.message);
+    return false;
+  }
+
+  console.log("✅ Payroll actualizado correctamente.");
   return true;
 };
