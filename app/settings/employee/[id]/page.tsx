@@ -1,82 +1,74 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { getEmployeeById, updateEmployee } from "@/lib/settingsService"; // ✅ Corrección aquí
+import { useRouter } from "next/navigation";
+import { getAllEmployees } from "@/lib/settingsService";
 
-export default function EditEmployeePage() {
+// ✅ Definir la interfaz para empleados
+interface Employee {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  employee_type: string;
+  supervisor_id: string;
+  status: string;
+  rate: number;
+  employment_type: string;
+}
+
+export default function EmployeesSettingsPage() {
   const router = useRouter();
-  const { id } = useParams();
-  const [employee, setEmployee] = useState({
-    name: "",
-    employee_type: "",
-    employment_type: "",
-  });
+  const [employees, setEmployees] = useState<Employee[]>([]); // ✅ Ahora está tipado correctamente
 
   useEffect(() => {
-    if (id) {
-      getEmployeeById(id).then((data) => {
-        if (data) setEmployee(data);
-      });
-    }
-  }, [id]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setEmployee({ ...employee, [e.target.name]: e.target.value });
-  };
-
-  const handleSave = async () => {
-    const success = await updateEmployee(id, employee);
-    if (success) {
-      alert("Employee updated successfully!");
-      router.push("/settings/employees");
-    } else {
-      alert("Failed to update employee.");
-    }
-  };
+    getAllEmployees().then((data) => setEmployees(data as Employee[])); // ✅ Convertimos los datos al tipo correcto
+  }, []);
 
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
-      <h1 className="text-3xl font-bold mb-6">Edit Employee</h1>
-      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg">
-        <div className="mb-4">
-          <label className="block text-gray-700">Name</label>
-          <input
-            type="text"
-            name="name"
-            value={employee.name}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700">Role</label>
-          <input
-            type="text"
-            name="employee_type"
-            value={employee.employee_type}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700">Employment Type</label>
-          <select
-            name="employment_type"
-            value={employee.employment_type}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="W-2">W-2</option>
-            <option value="1099">1099</option>
-          </select>
-        </div>
-        <button
-          onClick={handleSave}
-          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
-        >
-          Save Changes
-        </button>
+      <h1 className="text-3xl font-bold mb-6">Employee Settings</h1>
+
+      <div className="bg-white p-6 rounded-lg shadow-lg">
+        <table className="w-full border-collapse border border-gray-300">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="border px-4 py-2">NAME</th>
+              <th className="border px-4 py-2">EMAIL</th>
+              <th className="border px-4 py-2">PHONE</th>
+              <th className="border px-4 py-2">ROLE</th>
+              <th className="border px-4 py-2">EMPLOYMENT TYPE</th>
+              <th className="border px-4 py-2">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            {employees.length > 0 ? (
+              employees.map((employee) => (
+                <tr key={employee.id}>
+                  <td className="border px-4 py-2">{employee.name}</td>
+                  <td className="border px-4 py-2">{employee.email}</td>
+                  <td className="border px-4 py-2">{employee.phone}</td>
+                  <td className="border px-4 py-2">{employee.employee_type}</td>
+                  <td className="border px-4 py-2">{employee.employment_type}</td>
+                  <td className="border px-4 py-2">
+                    <button
+                      onClick={() => router.push(`/settings/employee/${employee.id}`)}
+                      className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                    >
+                      Edit
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6} className="border px-4 py-2 text-center text-gray-500">
+                  No employees found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

@@ -4,12 +4,32 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getAllEmployees } from "@/lib/settingsService";
 
+// ✅ Definir la interfaz para empleados
+interface Employee {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  employee_type: string;
+  supervisor_id: string;
+  status: string;
+  rate: number;
+  employment_type: string;
+}
+
 export default function EmployeesSettingsPage() {
   const router = useRouter();
-  const [employees, setEmployees] = useState([]);
+  const [employees, setEmployees] = useState<Employee[]>([]); // ✅ Ahora está tipado correctamente
 
   useEffect(() => {
-    getAllEmployees().then((data) => setEmployees(data)); // ✅ CORREGIDO
+    getAllEmployees().then((data) => {
+      if (Array.isArray(data)) {
+        setEmployees(data as Employee[]); // ✅ Convertimos los datos al tipo correcto
+      } else {
+        console.error("❌ Unexpected data format:", data);
+        setEmployees([]);
+      }
+    });
   }, []);
 
   return (
@@ -21,6 +41,8 @@ export default function EmployeesSettingsPage() {
           <thead className="bg-gray-200">
             <tr>
               <th className="border px-4 py-2">NAME</th>
+              <th className="border px-4 py-2">EMAIL</th>
+              <th className="border px-4 py-2">PHONE</th>
               <th className="border px-4 py-2">ROLE</th>
               <th className="border px-4 py-2">EMPLOYMENT TYPE</th>
               <th className="border px-4 py-2">ACTIONS</th>
@@ -31,6 +53,8 @@ export default function EmployeesSettingsPage() {
               employees.map((employee) => (
                 <tr key={employee.id}>
                   <td className="border px-4 py-2">{employee.name}</td>
+                  <td className="border px-4 py-2">{employee.email}</td>
+                  <td className="border px-4 py-2">{employee.phone}</td>
                   <td className="border px-4 py-2">{employee.employee_type}</td>
                   <td className="border px-4 py-2">{employee.employment_type}</td>
                   <td className="border px-4 py-2">
@@ -45,7 +69,7 @@ export default function EmployeesSettingsPage() {
               ))
             ) : (
               <tr>
-                <td colSpan={4} className="border px-4 py-2 text-center text-gray-500">
+                <td colSpan={6} className="border px-4 py-2 text-center text-gray-500">
                   No employees found.
                 </td>
               </tr>

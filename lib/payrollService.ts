@@ -66,7 +66,7 @@ export const getEmployeesForSupervisor = async (
 
     return (data || []).map((emp) => ({
       ...emp,
-      rate: emp.rate ?? 0, // 🔹 Asegurar que `rate` siempre tenga un valor
+      rate: emp.rate ?? 0,
     }));
   } catch (error) {
     console.error("❌ Error obteniendo empleados:", error);
@@ -168,20 +168,24 @@ export const getTotalPayroll = async (): Promise<Payroll[]> => {
         status,
         created_at,
         rejection_reason,
-        total_pay, 
+        total_pay,
         employees!inner(name, employee_type, employment_type)
       `)
       .eq("status", "pending");
 
     if (error) throw new Error(error.message);
 
-    return (data || []).map((payroll) => ({
-      ...payroll,
-      total_pay: payroll.total_pay ?? 0, // 🔹 Asegurar que `total_pay` siempre tenga un valor numérico
-      employee_name: payroll.employees?.name ?? "N/A",
-      employee_type: payroll.employees?.employee_type ?? "N/A",
-      employment_type: payroll.employees?.employment_type ?? "N/A",
-    }));
+    return (data || []).map((payroll) => {
+      const employee = Array.isArray(payroll.employees) ? payroll.employees[0] : payroll.employees;
+
+      return {
+        ...payroll,
+        total_pay: payroll.total_pay ?? 0,
+        employee_name: employee?.name ?? "N/A",
+        employee_type: employee?.employee_type ?? "N/A",
+        employment_type: employee?.employment_type ?? "N/A",
+      };
+    });
   } catch (error) {
     console.error("❌ Error obteniendo Payroll General:", error);
     return [];

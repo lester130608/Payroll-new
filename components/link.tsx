@@ -1,10 +1,15 @@
-import React from 'react';
-import NextLink from 'next/link';
+import NextLink from "next/link";
+import { ReactNode } from "react";
 
-export const Link: React.FC<{ href: string }> = ({ href, children }) => {
+interface LinkProps {
+  href: string;
+  children: ReactNode; // ✅ Agregado para que Next.js reconozca los hijos del componente
+}
+
+export const Link: React.FC<LinkProps> = ({ href, children }) => {
   return (
-    <NextLink href={href}>
-      <a className="link">{children}</a>
+    <NextLink href={href} className="link">
+      {children}
     </NextLink>
   );
 };

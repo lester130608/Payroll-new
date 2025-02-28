@@ -14,24 +14,24 @@ export default function DashboardPage() {
     const fetchEmployeeData = async () => {
       if (status === "loading") return;
       if (!session?.user) {
-        console.error("Session or user data is missing.");
+        console.error("❌ Session or user data is missing.");
         return;
       }
 
       let query = supabase.from("employees").select("id, status");
 
-      if (session.user && "role" in session.user && session.user.role?.includes("supervisor")) {
+      if (session.user?.role && typeof session.user.role === "string" && session.user.role.includes("supervisor")) {
         query = query.eq("supervisor_id", session.user.id);
       }
 
       const { data, error } = await query;
 
       if (error) {
-        console.error("Error fetching employee data:", error.message);
+        console.error("❌ Error fetching employee data:", error.message);
       } else {
         setEmployeeCount(data.length);
-        setActiveEmployees(data.filter(emp => emp.status === "active").length);
-        setInactiveEmployees(data.filter(emp => emp.status === "inactive").length);
+        setActiveEmployees(data.filter((emp) => emp.status === "active").length);
+        setInactiveEmployees(data.filter((emp) => emp.status === "inactive").length);
       }
     };
 
@@ -44,7 +44,10 @@ export default function DashboardPage() {
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
       <h1 className="text-3xl font-bold mb-6">
-        Welcome, {session.user && "role" in session.user && session.user.role === "admin" ? "Admin" : "Supervisor"}
+        Welcome,{" "}
+        {session.user?.role && typeof session.user.role === "string" && session.user.role === "admin"
+          ? "Admin"
+          : "Supervisor"}
       </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -64,7 +67,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {session.user && "role" in session.user && session.user.role === "admin" && (
+      {session.user?.role && typeof session.user.role === "string" && session.user.role === "admin" && (
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white p-6 rounded-lg shadow-lg">
             <h2 className="text-xl font-semibold">Reports</h2>
@@ -78,7 +81,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {session.user && "role" in session.user && session.user.role?.includes("supervisor") && (
+      {session.user?.role && typeof session.user.role === "string" && session.user.role.includes("supervisor") && (
         <div className="mt-6 bg-white p-6 rounded-lg shadow-lg text-center">
           <h2 className="text-xl font-semibold">Productivity Summary</h2>
           <p>See the latest employee performance stats.</p>

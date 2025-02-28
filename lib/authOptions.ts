@@ -1,8 +1,9 @@
 import { DefaultSession } from "next-auth";
+import { NextAuthOptions } from "next-auth"; 
 import CredentialsProvider from "next-auth/providers/credentials";
 import { createClient } from "@supabase/supabase-js";
 
-// 🔹 Extender el tipo de sesión de NextAuth
+// ✅ Extendemos el tipo `Session` en NextAuth
 declare module "next-auth" {
   interface Session {
     user: {
@@ -10,6 +11,12 @@ declare module "next-auth" {
       role: string;
       supervisor_code?: string | null;
     } & DefaultSession["user"];
+  }
+
+  interface User {
+    id: string;
+    role?: string;
+    supervisor_code?: string | null;
   }
 }
 
@@ -19,7 +26,7 @@ export const authOptions: NextAuthOptions = {
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email", placeholder: "your@email.com" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -45,40 +52,40 @@ export const authOptions: NextAuthOptions = {
         }
 
         return {
-          id: user.id,
+          id: String(user.id), 
           email: user.email,
-          role: user.role || "employee", // ✅ Aseguramos que `role` siempre tenga un valor
-          supervisor_code: user.supervisor_code || null
+          role: typeof user.role === "string" ? user.role : "employee",
+          supervisor_code: typeof user.supervisor_code === "string" ? user.supervisor_code : null, // ✅ Validamos `supervisor_code`
         };
-      }
-    })
+      },
+    }),
   ],
   pages: {
-    signIn: "/auth/login"
+    signIn: "/auth/login",
   },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
-        token.role = user.role || "employee"; // ✅ Aseguramos que `role` siempre esté presente
-        token.supervisor_code = user.supervisor_code || null;
+        token.id = String(user.id);
+        token.role = typeof user.role === "string" ? user.role : "employee";
+        token.supervisor_code = typeof user.supervisor_code === "string" ? user.supervisor_code : null; // ✅ Validamos `supervisor_code`
       }
       return token;
     },
     async session({ session, token }) {
       if (token) {
         session.user = {
-          id: token.id,
-          role: token.role || "employee", // ✅ Aseguramos que `session.user.role` tenga un valor correcto
-          supervisor_code: token.supervisor_code || null
+          id: String(token.id),
+          role: typeof token.role === "string" ? token.role : "employee",
+          supervisor_code: typeof token.supervisor_code === "string" ? token.supervisor_code : null, // ✅ Validamos `supervisor_code`
         };
       }
       console.log("🟢 Session Data Sent:", session);
       return session;
-    }
+    },
   },
   session: {
-    strategy: "jwt"
+    strategy: "jwt",
   },
-  secret: process.env.NEXTAUTH_SECRET
+  secret: process.env.NEXTAUTH_SECRET,
 };

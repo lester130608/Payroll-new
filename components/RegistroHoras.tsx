@@ -1,98 +1,99 @@
-import React, { useState } from 'react';
-import useRegistroStore from '../../lib/useRegistroStore';
+"use client";
+
+import React, { useState } from "react";
+import useRegistroStore from "@/lib/useRegistroStore";
+
+interface Registro {
+  empleado: string;
+  fecha: string;
+  horas: string;
+  servicio: string;
+}
 
 const RegistroHoras: React.FC = () => {
-  const [empleado, setEmpleado] = useState('');
-  const [fecha, setFecha] = useState('');
-  const [horas, setHoras] = useState('');
-  const [servicio, setServicio] = useState('');
+  const { registros, agregarRegistro, limpiarRegistros } = useRegistroStore();
+  const [empleado, setEmpleado] = useState("");
+  const [fecha, setFecha] = useState("");
+  const [horas, setHoras] = useState("");
+  const [servicio, setServicio] = useState("");
 
-  const agregarRegistro = useRegistroStore((state) => state.agregarRegistro);
+  const handleAddRegistro = () => {
+    if (!empleado || !fecha || !horas || !servicio) {
+      alert("Todos los campos son obligatorios.");
+      return;
+    }
 
-  const handleGuardar = () => {
-    const nuevoRegistro = { empleado, fecha, horas, servicio };
-    agregarRegistro(nuevoRegistro);
-    // Limpiar el formulario después de guardar
-    setEmpleado('');
-    setFecha('');
-    setHoras('');
-    setServicio('');
+    agregarRegistro({ empleado, fecha, horas, servicio });
+    setEmpleado("");
+    setFecha("");
+    setHoras("");
+    setServicio("");
   };
 
   return (
-    <form className="space-y-4">
-      <div>
-        <label htmlFor="empleado" className="block text-sm font-medium text-gray-700">
-          Empleado
-        </label>
-        <select
-          id="empleado"
-          name="empleado"
+    <div className="p-8 bg-gray-100 min-h-screen">
+      <h1 className="text-3xl font-bold mb-6">Registro de Horas</h1>
+
+      <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg mx-auto">
+        <label className="block text-gray-700">Empleado</label>
+        <input
+          type="text"
           value={empleado}
           onChange={(e) => setEmpleado(e.target.value)}
-          className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-        >
-          <option value="">Selecciona un empleado</option>
-          <option value="empleado1">Empleado 1</option>
-          <option value="empleado2">Empleado 2</option>
-          {/* Agrega más opciones según sea necesario */}
-        </select>
-      </div>
+          className="w-full px-4 py-2 border rounded-lg mb-4"
+        />
 
-      <div>
-        <label htmlFor="fecha" className="block text-sm font-medium text-gray-700">
-          Fecha
-        </label>
+        <label className="block text-gray-700">Fecha</label>
         <input
           type="date"
-          id="fecha"
-          name="fecha"
           value={fecha}
           onChange={(e) => setFecha(e.target.value)}
-          className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+          className="w-full px-4 py-2 border rounded-lg mb-4"
         />
-      </div>
 
-      <div>
-        <label htmlFor="horas" className="block text-sm font-medium text-gray-700">
-          Horas trabajadas
-        </label>
+        <label className="block text-gray-700">Horas</label>
         <input
           type="number"
-          id="horas"
-          name="horas"
           value={horas}
           onChange={(e) => setHoras(e.target.value)}
-          className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+          className="w-full px-4 py-2 border rounded-lg mb-4"
         />
-      </div>
 
-      <div>
-        <label htmlFor="servicio" className="block text-sm font-medium text-gray-700">
-          Servicio prestado
-        </label>
-        <select
-          id="servicio"
-          name="servicio"
+        <label className="block text-gray-700">Servicio</label>
+        <input
+          type="text"
           value={servicio}
           onChange={(e) => setServicio(e.target.value)}
-          className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-        >
-          <option value="">Selecciona un servicio</option>
-          <option value="servicio1">Servicio 1</option>
-          <option value="servicio2">Servicio 2</option>
-          {/* Agrega más opciones según sea necesario */}
-        </select>
-      </div>
+          className="w-full px-4 py-2 border rounded-lg mb-4"
+        />
 
-      <button
-        type="button"
-        onClick={handleGuardar}
-        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-      >
-        Guardar
-      </button>
-    </form>
+        <button
+          onClick={handleAddRegistro}
+          className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600"
+        >
+          Agregar Registro
+        </button>
+
+        {registros.length > 0 && (
+          <div className="mt-6">
+            <h2 className="text-xl font-semibold mb-2">Registros Guardados</h2>
+            <ul className="bg-gray-100 p-4 rounded-lg">
+              {registros.map((registro: Registro, index: number) => ( // ✅ Tipamos `index` como `number`
+                <li key={index} className="border-b last:border-0 py-2">
+                  {registro.fecha} - {registro.empleado} - {registro.horas}h - {registro.servicio}
+                </li>
+              ))}
+            </ul>
+            <button
+              onClick={limpiarRegistros}
+              className="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 mt-4"
+            >
+              Limpiar Registros
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

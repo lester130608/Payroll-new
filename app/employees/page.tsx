@@ -30,12 +30,14 @@ export default function EmployeesPage() {
 
       let query = supabase.from("employees").select("*").eq("status", "active");
 
-      if (session.user.role === "supervisor_tcm") {
-        query = query.eq("employee_type", "tcm");
-      } else if (session.user.role === "supervisor_ba") {
-        query = query.in("employee_type", ["rbt", "bcba", "bcaba"]);
-      } else if (session.user.role === "supervisor_clinician") {
-        query = query.eq("employee_type", "clinicians");
+      if (session.user?.role && typeof session.user.role === "string") {
+        if (session.user.role === "supervisor_tcm") {
+          query = query.eq("employee_type", "tcm");
+        } else if (session.user.role === "supervisor_ba") {
+          query = query.in("employee_type", ["rbt", "bcba", "bcaba"]);
+        } else if (session.user.role === "supervisor_clinician") {
+          query = query.eq("employee_type", "clinicians");
+        }
       }
 
       const { data, error } = await query;
@@ -55,7 +57,9 @@ export default function EmployeesPage() {
       <h1 className="text-3xl font-bold mb-6">Employees</h1>
 
       {/* Botón para crear empleados, visible para admin y supervisores */}
-      {session?.user?.role === "admin" || session?.user?.role.includes("supervisor") ? (
+      {session?.user?.role &&
+      typeof session.user.role === "string" &&
+      (session.user.role === "admin" || session.user.role.includes("supervisor")) ? (
         <div className="mb-4">
           <Link
             href="/employees/create"

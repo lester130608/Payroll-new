@@ -17,44 +17,46 @@ export default function CreateEmployeePage() {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    if (!session?.user) return;
+    if (!session?.user?.role) return;
 
-    // Definir qué tipos de empleados puede crear cada supervisor
     let allowed: string[] = [];
 
-    if (session.user.role === "admin") {
-      allowed = ["employee", "rbt", "bcba", "bcaba", "clinicians", "tcm"];
-    } else if (session.user.role === "supervisor_tcm") {
-      allowed = ["tcm"];
-    } else if (session.user.role === "supervisor_ba") {
-      allowed = ["rbt", "bcba", "bcaba"];
-    } else if (session.user.role === "supervisor_clinician") {
-      allowed = ["clinicians"];
+    switch (session.user.role) {
+      case "admin":
+        allowed = ["employee", "rbt", "bcba", "bcaba", "clinicians", "tcm"];
+        break;
+      case "supervisor_tcm":
+        allowed = ["tcm"];
+        break;
+      case "supervisor_ba":
+        allowed = ["rbt", "bcba", "bcaba"];
+        break;
+      case "supervisor_clinician":
+        allowed = ["clinicians"];
+        break;
+      default:
+        console.warn("❌ Rol desconocido:", session.user.role);
     }
 
     setAllowedTypes(allowed);
-    setEmployeeType(allowed.length > 0 ? allowed[0] : ""); // Seleccionar automáticamente el primer valor válido
-  }, [session]);
+    setEmployeeType(allowed.length > 0 ? allowed[0] : "");
+  }, [session?.user?.role]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+
     if (!session?.user) {
-      console.error("No user session found!");
+      console.error("❌ No user session found!");
       return;
     }
-  
-    console.log("User Session Data:", session.user); // 🔍 Ver qué datos tiene `session.user`
-  
-    let supervisorId = null;
-  
-    if (session.user.role.includes("supervisor")) {
-      supervisorId = session.user.id; // ✅ Tomamos directamente el `id` del usuario autenticado
-    }
-  
-    console.log("Supervisor ID Assigned:", supervisorId); // 🔍 Confirmar el `supervisor_id` antes de insertarlo
-  
-    // Insertar el nuevo empleado con `supervisor_id`
+
+    console.log("✅ User Session Data:", session.user);
+
+    const supervisorId =
+      session.user.role && session.user.role.includes("supervisor") ? session.user.id : null;
+
+    console.log("✅ Supervisor ID Assigned:", supervisorId);
+
     const { error } = await supabase.from("employees").insert([
       {
         name,
@@ -62,12 +64,12 @@ export default function CreateEmployeePage() {
         phone,
         status: "active",
         employee_type: employeeType,
-        supervisor_id: supervisorId, // ✅ Se asigna correctamente
+        supervisor_id: supervisorId,
       },
     ]);
-  
+
     if (error) {
-      console.error("Error creating employee:", error.message);
+      console.error("❌ Error creating employee:", error.message);
       setErrorMessage("Failed to create employee.");
     } else {
       router.push("/employees");
@@ -121,11 +123,15 @@ export default function CreateEmployeePage() {
             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           >
-            {allowedTypes.map((type) => (
-              <option key={type} value={type}>
-                {type.toUpperCase()}
-              </option>
-            ))}
+            {allowedTypes.length > 0 ? (
+              allowedTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type.toUpperCase()}
+                </option>
+              ))
+            ) : (
+              <option value="">No available types</option>
+            )}
           </select>
         </div>
 

@@ -1,4 +1,4 @@
-import create from 'zustand';
+import { create } from "zustand"; // ✅ Importación corregida
 
 interface Registro {
   empleado: string;
