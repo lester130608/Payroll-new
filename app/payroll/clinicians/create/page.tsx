@@ -8,7 +8,6 @@ import PayrollFormClinicians from "@/components/PayrollFormClinicians";
 interface Employee {
   id: string;
   name: string;
-  employee_type: string;
 }
 
 export default function CreateCliniciansPayrollPage() {
@@ -17,18 +16,24 @@ export default function CreateCliniciansPayrollPage() {
 
   useEffect(() => {
     if (session?.user) {
+      console.log("📌 Rol del usuario en sesión:", session.user.role);
+      console.log("📌 ID del usuario en sesión:", session.user.id);
+
       getEmployeesForSupervisor(session.user.id, session.user.role).then((employees) => {
+        console.log("📌 Empleados recibidos en Clinicians Payroll:", employees);
         setEmployees(employees);
       });
     }
   }, [session]);
 
-  const handleSave = (data: Employee[]) => {
-    console.log("Clinicians Payroll saved:", data);
+  const handleSave = (data: Record<string, any>) => {
+    console.log("Clinicians Payroll saved as Draft:", data);
+    alert("Payroll saved successfully!");
   };
 
-  const handleSubmit = (data: Employee[]) => {
-    console.log("Clinicians Payroll submitted:", data);
+  const handleSubmit = (data: Record<string, any>) => {
+    console.log("Clinicians Payroll submitted as Final:", data);
+    alert("Payroll submitted successfully!");
   };
 
   return (

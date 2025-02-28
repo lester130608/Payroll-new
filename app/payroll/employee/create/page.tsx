@@ -8,7 +8,6 @@ import PayrollFormEmployee from "@/components/PayrollFormEmployee";
 interface Employee {
   id: string;
   name: string;
-  employee_type: string;
 }
 
 export default function CreateEmployeePayrollPage() {
@@ -17,18 +16,24 @@ export default function CreateEmployeePayrollPage() {
 
   useEffect(() => {
     if (session?.user) {
+      console.log("📌 Rol del usuario en sesión:", session.user.role);
+      console.log("📌 ID del usuario en sesión:", session.user.id);
+
       getEmployeesForSupervisor(session.user.id, session.user.role).then((employees) => {
+        console.log("📌 Empleados recibidos en Employee Payroll:", employees);
         setEmployees(employees);
       });
     }
   }, [session]);
 
-  const handleSave = (data: Employee[]) => {
-    console.log("Employee Payroll saved:", data);
+  const handleSave = (data: Record<string, any>) => {
+    console.log("Employee Payroll saved as Draft:", data);
+    alert("Payroll saved successfully!");
   };
 
-  const handleSubmit = (data: Employee[]) => {
-    console.log("Employee Payroll submitted:", data);
+  const handleSubmit = (data: Record<string, any>) => {
+    console.log("Employee Payroll submitted as Final:", data);
+    alert("Payroll submitted successfully!");
   };
 
   return (

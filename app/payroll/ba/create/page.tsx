@@ -8,7 +8,6 @@ import PayrollFormBA from "@/components/PayrollFormBA";
 interface Employee {
   id: string;
   name: string;
-  employee_type: string;
 }
 
 export default function CreateBAPayrollPage() {
@@ -17,18 +16,24 @@ export default function CreateBAPayrollPage() {
 
   useEffect(() => {
     if (session?.user) {
+      console.log("📌 Rol del usuario en sesión:", session.user.role);
+      console.log("📌 ID del usuario en sesión:", session.user.id);
+
       getEmployeesForSupervisor(session.user.id, session.user.role).then((employees) => {
+        console.log("📌 Empleados recibidos en BA Payroll:", employees);
         setEmployees(employees);
       });
     }
   }, [session]);
 
-  const handleSave = (data: Employee[]) => {
-    console.log("BA Payroll saved:", data);
+  const handleSave = (data: Record<string, any>) => {
+    console.log("BA Payroll saved as Draft:", data);
+    alert("Payroll saved successfully!");
   };
 
-  const handleSubmit = (data: Employee[]) => {
-    console.log("BA Payroll submitted:", data);
+  const handleSubmit = (data: Record<string, any>) => {
+    console.log("BA Payroll submitted as Final:", data);
+    alert("Payroll submitted successfully!");
   };
 
   return (
