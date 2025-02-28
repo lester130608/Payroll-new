@@ -2,27 +2,25 @@
 
 import { useEffect, useState } from "react";
 
-interface Employee {
+export interface Employee {
   id: string;
   name: string;
   rate: number;
 }
 
-interface PayrollEntry {
+export interface PayrollEntry {
   employee_id: string;
   hours: string;
   total_pay: number;
 }
 
-export default function PayrollFormEmployee({
-  employees = [],
-  onSave,
-  onSubmit,
-}: {
+interface PayrollFormProps {
   employees: Employee[];
   onSave: (data: PayrollEntry[]) => void;
   onSubmit: (data: PayrollEntry[]) => void;
-}) {
+}
+
+export default function PayrollFormEmployee({ employees = [], onSave, onSubmit }: PayrollFormProps) {
   const [payrollData, setPayrollData] = useState<PayrollEntry[]>([]);
 
   // 📌 Inicializar payrollData cuando cambia employees

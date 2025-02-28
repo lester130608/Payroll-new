@@ -2,12 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-interface Employee {
-  id: string;
-  name: string;
-}
-
-interface PayrollEntry {
+export interface PayrollEntry {
   employee_id: string;
   it: string;
   bio: string;
@@ -19,15 +14,22 @@ interface PayrollEntry {
   tp_review: string;
 }
 
+interface Employee {
+  id: string;
+  name: string;
+}
+
+interface PayrollFormProps {
+  employees: Employee[];
+  onSave: (data: PayrollEntry[]) => void;
+  onSubmit: (data: PayrollEntry[]) => void;
+}
+
 export default function PayrollFormClinicians({
   employees = [],
   onSave,
   onSubmit,
-}: {
-  employees: Employee[];
-  onSave: (data: PayrollEntry[]) => void;
-  onSubmit: (data: PayrollEntry[]) => void;
-}) {
+}: PayrollFormProps) {
   const [payrollData, setPayrollData] = useState<PayrollEntry[]>([]);
 
   useEffect(() => {
@@ -75,19 +77,26 @@ export default function PayrollFormClinicians({
             payrollData.map((entry, index) => (
               <tr key={`${entry.employee_id}-${index}`}>
                 <td className="border px-4 py-2">{employees[index]?.name || "Unknown"}</td>
-                {["it", "bio", "tp", "intake", "in_depth_bio", "in_depth_intake", "in_depth_existing", "tp_review"].map(
-                  (field) => (
-                    <td key={field} className="border px-4 py-2">
-                      <input
-                        type="number"
-                        value={entry[field as keyof PayrollEntry]}
-                        onChange={(e) => handleChange(index, field as keyof PayrollEntry, e.target.value)}
-                        className="border p-1 w-16"
-                        min="0"
-                      />
-                    </td>
-                  )
-                )}
+                {[
+                  "it",
+                  "bio",
+                  "tp",
+                  "intake",
+                  "in_depth_bio",
+                  "in_depth_intake",
+                  "in_depth_existing",
+                  "tp_review",
+                ].map((field) => (
+                  <td key={field} className="border px-4 py-2">
+                    <input
+                      type="number"
+                      value={entry[field as keyof PayrollEntry]}
+                      onChange={(e) => handleChange(index, field as keyof PayrollEntry, e.target.value)}
+                      className="border p-1 w-16"
+                      min="0"
+                    />
+                  </td>
+                ))}
               </tr>
             ))
           ) : (

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 interface Employee {
@@ -10,176 +10,89 @@ interface Employee {
   email: string;
   phone: string;
   role: string;
-  status: string;
-  employee_type: string | null;
-  rate: number | null;
 }
 
-export default function EditEmployeePage({ params }: { params: { id: string } }) {
+export default function ModifyEmployeePage() {
   const router = useRouter();
-  const [employeeData, setEmployeeData] = useState<Employee | null>(null);
+  const params = useParams(); // 🔹 Usa useParams() para obtener los parámetros dinámicos
+  const [employee, setEmployee] = useState<Employee | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchEmployee = async () => {
-      const { data, error } = await supabase
-        .from("employees")
-        .select("*")
-        .eq("id", params.id)
-        .single();
+    if (!params?.id || typeof params.id !== "string") return;
 
-      if (data) {
-        setEmployeeData(data);
-      } else {
-        console.error("Error fetching employee:", error?.message);
+    const fetchEmployee = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("employees")
+          .select("id, name, email, phone, role")
+          .eq("id", params.id)
+          .single();
+
+        if (error) {
+          console.error("❌ Error fetching employee:", error.message);
+          setLoading(false);
+        } else {
+          setEmployee(data);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("❌ Unexpected error fetching employee:", error);
+        setLoading(false);
       }
     };
 
     fetchEmployee();
-  }, [params.id]);
+  }, [params?.id]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    if (employeeData) {
-      setEmployeeData({ ...employeeData, [e.target.name]: e.target.value });
+  const handleUpdate = async () => {
+    if (!params?.id || typeof params.id !== "string") return;
+
+    try {
+      const { error } = await supabase
+        .from("employees")
+        .update({ role: "updated_role" }) // Simula una actualización
+        .eq("id", params.id);
+
+      if (error) {
+        console.error("❌ Error updating employee:", error.message);
+      } else {
+        router.push("/employees");
+      }
+    } catch (error) {
+      console.error("❌ Unexpected error updating employee:", error);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  if (loading) {
+    return <p>Loading employee data...</p>;
+  }
 
-    if (!employeeData) return;
-
-    const { error } = await supabase
-      .from("employees")
-      .update({
-        name: employeeData.name,
-        email: employeeData.email,
-        phone: employeeData.phone,
-        role: employeeData.role,
-        status: employeeData.status,
-        employee_type: employeeData.employee_type,
-        rate: employeeData.rate,
-      })
-      .eq("id", employeeData.id);
-
-    if (error) {
-      console.error("Error updating employee:", error.message);
-    } else {
-      alert("Employee updated successfully!");
-      router.push("/employees");
-    }
-  };
-
-  if (!employeeData) {
-    return <div className="p-8">Loading...</div>;
+  if (!employee) {
+    return <p>Employee not found.</p>;
   }
 
   return (
-    <div className="p-8 bg-gray-100 min-h-screen">
-      <h1 className="text-3xl font-bold mb-6">Edit Employee</h1>
-
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-lg max-w-lg">
-        <div className="mb-4">
-          <label className="block font-medium">Full Name</label>
-          <input
-            type="text"
-            name="name"
-            value={employeeData.name}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-            required
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block font-medium">Email</label>
-          <input
-            type="email"
-            name="email"
-            value={employeeData.email}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-            required
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block font-medium">Phone</label>
-          <input
-            type="text"
-            name="phone"
-            value={employeeData.phone || ""}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block font-medium">Role</label>
-          <select
-            name="role"
-            value={employeeData.role}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-          >
-            <option value="Supervisor">Supervisor</option>
-            <option value="Employee">Employee</option>
-            <option value="RBT">RBT</option>
-            <option value="BCaBA">BCaBA</option>
-            <option value="BCBA">BCBA</option>
-            <option value="TCM">TCM</option>
-            <option value="Clinician">Clinician</option>
-          </select>
-        </div>
-
-        {["RBT", "BCaBA", "BCBA", "Employee", "TCM"].includes(employeeData.role) && (
-          <div className="mb-4">
-            <label className="block font-medium">Rate</label>
-            <input
-              type="number"
-              name="rate"
-              value={employeeData.rate || ""}
-              onChange={handleChange}
-              className="w-full p-2 border rounded"
-              step="0.01"
-            />
-          </div>
-        )}
-
-        {["RBT", "BCaBA", "BCBA"].includes(employeeData.role) && (
-          <div className="mb-4">
-            <label className="block font-medium">Type of Employee</label>
-            <select
-              name="employee_type"
-              value={employeeData.employee_type || ""}
-              onChange={handleChange}
-              className="w-full p-2 border rounded"
-              required
-            >
-              <option value="">Select Type</option>
-              <option value="RBT">RBT</option>
-              <option value="BCaBA">BCaBA</option>
-              <option value="BCBA">BCBA</option>
-            </select>
-          </div>
-        )}
-
-        <div className="mb-4">
-          <label className="block font-medium">Status</label>
-          <select
-            name="status"
-            value={employeeData.status}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-          >
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
-        </div>
-
-        <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
-          Update Employee
+    <div className="p-8 bg-gray-100 min-h-screen flex flex-col items-center">
+      <h1 className="text-3xl font-bold mb-6">Modify Employee</h1>
+      <p className="mb-2"><strong>Name:</strong> {employee.name}</p>
+      <p className="mb-2"><strong>Email:</strong> {employee.email}</p>
+      <p className="mb-2"><strong>Phone:</strong> {employee.phone}</p>
+      <p className="mb-4"><strong>Role:</strong> {employee.role}</p>
+      <div className="flex gap-4">
+        <button
+          onClick={handleUpdate}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        >
+          Update Role
         </button>
-      </form>
+        <button
+          onClick={() => router.push("/employees")}
+          className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+        >
+          Cancel
+        </button>
+      </div>
     </div>
   );
 }

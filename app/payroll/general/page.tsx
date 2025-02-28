@@ -1,43 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getTotalPayroll } from "@/lib/payrollService";
+import { getTotalPayroll, Payroll } from "@/lib/payrollService"; // 🔹 Importamos `Payroll`
 
-export default function PayrollGeneralPage() {
-  const [payrollData, setPayrollData] = useState([]);
+export default function GeneralPayrollPage() {
+  const [payrollData, setPayrollData] = useState<Payroll[]>([]); // 🔹 Definir correctamente el tipo
 
   useEffect(() => {
-    getTotalPayroll().then(setPayrollData);
+    getTotalPayroll().then((data) => setPayrollData(data)); // ✅ Ahora TypeScript reconocerá `Payroll[]`
   }, []);
 
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
-      <h1 className="text-3xl font-bold mb-6">Payroll General</h1>
+      <h1 className="text-3xl font-bold mb-6">General Payroll</h1>
       <div className="bg-white p-6 rounded-lg shadow-lg">
-        <table className="w-full border-collapse border border-gray-300">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="border px-4 py-2">Employee</th>
-              <th className="border px-4 py-2">Total Pay</th>
-            </tr>
-          </thead>
-          <tbody>
-            {payrollData.length > 0 ? (
-              payrollData.map((payroll) => (
-                <tr key={payroll.id}>
-                  <td className="border px-4 py-2">{payroll.name}</td>
-                  <td className="border px-4 py-2">${payroll.total_pay.toFixed(2)}</td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={2} className="border px-4 py-2 text-center text-gray-500">
-                  No payroll data found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        {payrollData.length > 0 ? (
+          <ul>
+            {payrollData.map((entry) => (
+              <li key={entry.id} className="border-b last:border-0 px-4 py-2">
+                {entry.date}: {entry.hours_worked} hours, {entry.status}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-gray-600">No payroll data available.</p>
+        )}
       </div>
     </div>
   );

@@ -2,50 +2,55 @@
 
 import { useEffect, useState } from "react";
 
-interface Employee {
+export interface Employee {
   id: string;
   name: string;
 }
 
-interface PayrollEntry {
+export interface PayrollEntry {
   employee_id: string;
   hours: string;
   date: string;
 }
 
-export default function PayrollFormTCM({
-  employees = [],
-  onSave,
-  onSubmit,
-}: {
+interface PayrollFormProps {
   employees: Employee[];
   onSave: (data: PayrollEntry[]) => void;
   onSubmit: (data: PayrollEntry[]) => void;
-}) {
+}
+
+export default function PayrollFormTCM({ employees = [], onSave, onSubmit }: PayrollFormProps) {
   const [payrollData, setPayrollData] = useState<PayrollEntry[]>([]);
 
+  // Inicializar payrollData cuando `employees` cambie
   useEffect(() => {
-    if (employees.length > 0) {
-      setPayrollData(
-        employees.map((emp) => ({
-          employee_id: emp.id,
-          hours: "",
-          date: "",
-        }))
-      );
-    }
+    if (employees.length === 0) return; // 🔹 Evitar re-render innecesario
+
+    setPayrollData(
+      employees.map((emp) => ({
+        employee_id: emp.id,
+        hours: "",
+        date: "",
+      }))
+    );
   }, [employees]);
 
   const handleChange = (index: number, field: keyof PayrollEntry, value: string) => {
     setPayrollData((prev) =>
-      prev.map((entry, i) => (i === index ? { ...entry, [field]: value } : entry))
+      prev.map((entry, i) =>
+        i === index
+          ? {
+              ...entry,
+              [field]: field === "hours" ? value.replace(/[^0-9]/g, "") : value, // 🔹 Validar que `hours` sea solo números
+            }
+          : entry
+      )
     );
   };
 
   const handleAddWeek = (index: number) => {
-    if (index < 0 || index >= payrollData.length) return; // Prevención de errores
+    if (index < 0 || index >= payrollData.length) return; // 🔹 Evitar errores de índice
     const currentEntry = payrollData[index];
-    if (!currentEntry) return;
 
     setPayrollData((prev) => [
       ...prev.slice(0, index + 1),

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { fetchReports } from "@/lib/reportsService";
 
 interface Report {
-  id: string;
+  id: string; // ✅ Convertimos `id` a `string`
   title: string;
 }
 
@@ -17,7 +17,12 @@ export default function ReportsCreatePage() {
     fetchReports()
       .then((data) => {
         if (Array.isArray(data)) {
-          setReports(data);
+          setReports(
+            data.map((report) => ({
+              id: report.id.toString(), // ✅ Convertimos `id` a `string`
+              title: report.name, // ✅ Convertimos `name` a `title`
+            }))
+          );
         } else {
           console.error("❌ Unexpected data format:", data);
           setReports([]);

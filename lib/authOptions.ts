@@ -1,6 +1,17 @@
-import { NextAuthOptions } from "next-auth";
+import { DefaultSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { createClient } from "@supabase/supabase-js";
+
+// 🔹 Extender el tipo de sesión de NextAuth
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      role: string;
+      supervisor_code?: string | null;
+    } & DefaultSession["user"];
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -26,7 +37,7 @@ export const authOptions: NextAuthOptions = {
           .eq("email", credentials.email)
           .single();
 
-        console.log("🔍 User Data from Supabase:", user); // 🔍 Ver los datos obtenidos de Supabase
+        console.log("🔍 User Data from Supabase:", user);
 
         if (error || !user) {
           console.error("❌ Error fetching user:", error?.message);
@@ -62,7 +73,7 @@ export const authOptions: NextAuthOptions = {
           supervisor_code: token.supervisor_code || null
         };
       }
-      console.log("🟢 Session Data Sent:", session); // 🔍 Ver la sesión generada
+      console.log("🟢 Session Data Sent:", session);
       return session;
     }
   },

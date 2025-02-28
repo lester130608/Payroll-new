@@ -1,17 +1,18 @@
 import { supabase } from "./supabaseClient";
 
-// Definir interfaz para empleados
-interface Employee {
+// 🔹 Definir interfaz para empleados
+export interface Employee {
   id: string;
   name: string;
   employee_type: string;
   employment_type: string;
   supervisor_id: string;
   status: string;
+  rate: number;
 }
 
-// Definir interfaz para Payroll
-interface Payroll {
+// 🔹 Definir interfaz para Payroll
+export interface Payroll {
   id: string;
   employee_id: string;
   supervisor_id: string;
@@ -20,6 +21,11 @@ interface Payroll {
   services_completed: number;
   status: string;
   created_at: string;
+  rejection_reason?: string;
+  total_pay: number;
+  employee_name: string;
+  employee_type: string;
+  employment_type: string;
 }
 
 // 🔍 Obtener empleados según el rol del supervisor
@@ -27,6 +33,11 @@ export const getEmployeesForSupervisor = async (
   supervisorId: string,
   role: string
 ): Promise<Employee[]> => {
+  if (!supervisorId || !role) {
+    console.error("❌ Error: supervisorId o role no válidos.");
+    return [];
+  }
+
   console.log("🔍 Buscando empleados para supervisor:", supervisorId, "Rol:", role);
 
   const roleMapping: Record<string, string[]> = {
@@ -39,33 +50,37 @@ export const getEmployeesForSupervisor = async (
   const employeeTypes = roleMapping[role];
 
   if (!employeeTypes) {
-    console.error("❌ Rol no reconocido:", role);
+    console.error("❌ Error: Rol no reconocido:", role);
     return [];
   }
 
   try {
     const { data, error } = await supabase
       .from("employees")
-      .select("id, name, employee_type, employment_type, supervisor_id, status")
+      .select("id, name, employee_type, employment_type, supervisor_id, status, rate")
       .eq("status", "active")
       .in("employee_type", employeeTypes)
       .eq("supervisor_id", supervisorId);
 
-    if (error) {
-      console.error("❌ Error obteniendo empleados:", error);
-      return [];
-    }
+    if (error) throw new Error(error.message);
 
-    console.log("✅ Empleados encontrados:", data);
-    return data || [];
+    return (data || []).map((emp) => ({
+      ...emp,
+      rate: emp.rate ?? 0, // 🔹 Asegurar que `rate` siempre tenga un valor
+    }));
   } catch (error) {
-    console.error("❌ Error inesperado obteniendo empleados:", error);
+    console.error("❌ Error obteniendo empleados:", error);
     return [];
   }
 };
 
 // 🔍 Obtener Payroll de un empleado
 export const getEmployeePayroll = async (employeeId: string): Promise<Payroll[]> => {
+  if (!employeeId) {
+    console.error("❌ Error: employeeId no válido.");
+    return [];
+  }
+
   console.log("🔍 Obteniendo Payroll para empleado:", employeeId);
 
   try {
@@ -74,21 +89,25 @@ export const getEmployeePayroll = async (employeeId: string): Promise<Payroll[]>
       .select("*")
       .eq("employee_id", employeeId);
 
-    if (error) {
-      console.error("❌ Error obteniendo Payroll del empleado:", error);
-      return [];
-    }
+    if (error) throw new Error(error.message);
 
-    console.log("✅ Payroll obtenido:", data);
     return data || [];
   } catch (error) {
-    console.error("❌ Error inesperado obteniendo Payroll:", error);
+    console.error("❌ Error obteniendo Payroll del empleado:", error);
     return [];
   }
 };
 
 // ✅ Actualizar datos de Payroll de un empleado
-export const updateEmployeePayroll = async (payrollId: string, updates: Partial<Payroll>): Promise<boolean> => {
+export const updateEmployeePayroll = async (
+  payrollId: string,
+  updates: Partial<Payroll>
+): Promise<boolean> => {
+  if (!payrollId || !updates) {
+    console.error("❌ Error: payrollId o updates no válidos.");
+    return false;
+  }
+
   console.log("📝 Actualizando Payroll con ID:", payrollId);
 
   try {
@@ -97,61 +116,74 @@ export const updateEmployeePayroll = async (payrollId: string, updates: Partial<
       .update(updates)
       .eq("id", payrollId);
 
-    if (error) {
-      console.error("❌ Error actualizando Payroll:", error);
-      return false;
-    }
+    if (error) throw new Error(error.message);
 
     console.log("✅ Payroll actualizado correctamente.");
     return true;
   } catch (error) {
-    console.error("❌ Error inesperado actualizando Payroll:", error);
+    console.error("❌ Error actualizando Payroll:", error);
     return false;
   }
 };
 
-// ❌ Rechazar un Payroll
-export const rejectPayrollEntry = async (payrollId: string): Promise<boolean> => {
-  console.log("❌ Rechazando Payroll con ID:", payrollId);
+// ❌ Rechazar un Payroll con motivo
+export const rejectPayrollEntry = async (payrollId: string, reason: string): Promise<boolean> => {
+  if (!payrollId || !reason) {
+    console.error("❌ Error: payrollId o reason no válidos.");
+    return false;
+  }
+
+  console.log("❌ Rechazando Payroll con ID:", payrollId, "Razón:", reason);
 
   try {
     const { error } = await supabase
       .from("payroll")
-      .update({ status: "rejected" })
+      .update({ status: "rejected", rejection_reason: reason })
       .eq("id", payrollId);
 
-    if (error) {
-      console.error("❌ Error rechazando Payroll:", error);
-      return false;
-    }
+    if (error) throw new Error(error.message);
 
     console.log("✅ Payroll rechazado correctamente.");
     return true;
   } catch (error) {
-    console.error("❌ Error inesperado rechazando Payroll:", error);
+    console.error("❌ Error rechazando Payroll:", error);
     return false;
   }
 };
 
-// 🔍 Obtener Payroll General
+// 🔍 Obtener Payroll General con detalles de empleados y total_pay
 export const getTotalPayroll = async (): Promise<Payroll[]> => {
   console.log("🔍 Obteniendo datos de Payroll General...");
 
   try {
     const { data, error } = await supabase
       .from("payroll")
-      .select("id, employee_id, supervisor_id, date, hours_worked, services_completed, status, created_at")
+      .select(`
+        id,
+        employee_id,
+        supervisor_id,
+        date,
+        hours_worked,
+        services_completed,
+        status,
+        created_at,
+        rejection_reason,
+        total_pay, 
+        employees!inner(name, employee_type, employment_type)
+      `)
       .eq("status", "pending");
 
-    if (error) {
-      console.error("❌ Error obteniendo Payroll General:", error);
-      return [];
-    }
+    if (error) throw new Error(error.message);
 
-    console.log("✅ Payroll General obtenido:", data);
-    return data || [];
+    return (data || []).map((payroll) => ({
+      ...payroll,
+      total_pay: payroll.total_pay ?? 0, // 🔹 Asegurar que `total_pay` siempre tenga un valor numérico
+      employee_name: payroll.employees?.name ?? "N/A",
+      employee_type: payroll.employees?.employee_type ?? "N/A",
+      employment_type: payroll.employees?.employment_type ?? "N/A",
+    }));
   } catch (error) {
-    console.error("❌ Error inesperado obteniendo Payroll General:", error);
+    console.error("❌ Error obteniendo Payroll General:", error);
     return [];
   }
 };
@@ -167,10 +199,7 @@ export const approveAllPayroll = async (): Promise<boolean> => {
       .eq("status", "pending")
       .select();
 
-    if (error) {
-      console.error("❌ Error aprobando Payroll:", error);
-      return false;
-    }
+    if (error) throw new Error(error.message);
 
     if (!data || data.length === 0) {
       console.warn("⚠️ No hay payrolls pendientes por aprobar.");
@@ -180,7 +209,7 @@ export const approveAllPayroll = async (): Promise<boolean> => {
     console.log(`✅ ${data.length} Payrolls han sido aprobados.`);
     return true;
   } catch (error) {
-    console.error("❌ Error inesperado aprobando Payroll:", error);
+    console.error("❌ Error aprobando Payroll:", error);
     return false;
   }
 };

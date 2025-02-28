@@ -1,26 +1,31 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getTotalPayroll, rejectPayrollEntry, approveAllPayroll } from "@/lib/payrollService";
+import { getTotalPayroll, rejectPayrollEntry, approveAllPayroll, Payroll } from "@/lib/payrollService";
 
 export default function PayrollTotalPage() {
-  const [payrollData, setPayrollData] = useState([]);
+  const [payrollData, setPayrollData] = useState<Payroll[]>([]);
+
+  // ✅ Definir `fetchPayroll`
+  const fetchPayroll = async () => {
+    try {
+      const data = await getTotalPayroll();
+      setPayrollData(data);
+    } catch (error) {
+      console.error("❌ Error al obtener el payroll:", error);
+    }
+  };
 
   useEffect(() => {
     fetchPayroll();
   }, []);
-
-  const fetchPayroll = async () => {
-    const data = await getTotalPayroll();
-    setPayrollData(data);
-  };
 
   const handleReject = async (payrollId: string) => {
     const reason = prompt("Ingrese la razón del rechazo:");
     if (reason) {
       const success = await rejectPayrollEntry(payrollId, reason);
       if (success) {
-        fetchPayroll();
+        fetchPayroll(); // ✅ Ahora `fetchPayroll` está definido
       }
     }
   };

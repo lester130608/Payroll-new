@@ -2,22 +2,45 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { getEmployeePayroll, updateEmployeePayroll } from "@/lib/payrollService";
+import { getEmployeePayroll, updateEmployeePayroll, Payroll } from "@/lib/payrollService";
 
 export default function ModifyPayrollPage() {
   const router = useRouter();
-  const { id } = useParams();
-  const [employee, setEmployee] = useState({ name: "", total_pay: "" });
+  const params = useParams();
+  const id = Array.isArray(params?.id) ? params.id[0] : params?.id; // ✅ Asegurar que `id` sea un string
+
+  const [employee, setEmployee] = useState<{ name: string; total_pay: string }>({
+    name: "",
+    total_pay: "",
+  });
 
   useEffect(() => {
-    getEmployeePayroll(id).then((data) => {
-      setEmployee(data);
+    if (!id) return; // ✅ Evitamos llamadas innecesarias si `id` es undefined
+
+    getEmployeePayroll(id).then((data: Payroll[]) => {
+      if (data.length > 0) {
+        const payroll = data[0]; // 🔹 Tomamos el primer elemento del array
+        setEmployee({
+          name: payroll.employee_id, // 🔹 Ajusta esto si tienes el nombre en otro campo
+          total_pay: payroll.hours_worked.toString(), // 🔹 Convierte `number` a `string`
+        });
+      } else {
+        console.error(`❌ No se encontró payroll para el ID: ${id}`);
+      }
     });
   }, [id]);
 
   const handleSave = async () => {
-    await updateEmployeePayroll(id, employee);
-    alert("Payroll updated successfully!");
+    if (!id) {
+      alert("❌ Error: No se puede actualizar porque el ID es inválido.");
+      return;
+    }
+
+    await updateEmployeePayroll(id, {
+      hours_worked: parseFloat(employee.total_pay), // 🔹 Convertimos `total_pay` a número antes de enviarlo
+    });
+
+    alert("✅ Payroll updated successfully!");
     router.push("/payroll/total");
   };
 
@@ -26,7 +49,7 @@ export default function ModifyPayrollPage() {
       <h1 className="text-3xl font-bold mb-6">Modify Payroll</h1>
 
       <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-        <label className="block text-gray-700">Employee Name</label>
+        <label className="block text-gray-700">Employee ID</label>
         <input
           type="text"
           value={employee.name}
