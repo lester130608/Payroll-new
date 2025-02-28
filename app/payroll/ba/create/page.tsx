@@ -5,7 +5,6 @@ import { useSession } from "next-auth/react";
 import { getEmployeesForSupervisor } from "@/lib/payrollService";
 import PayrollFormBA from "@/components/PayrollFormBA";
 
-// Definir el tipo Employee
 interface Employee {
   id: string;
   name: string;
