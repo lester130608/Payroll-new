@@ -12,41 +12,58 @@ interface Employee {
   role: string;
 }
 
-export default function DeleteEmployeePage({ params }: { params: { id: string } }) {
+interface Props {
+  params: { id: string };
+}
+
+export default function DeleteEmployeePage({ params }: Props) {
   const router = useRouter();
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchEmployee = async () => {
-      const { data, error } = await supabase
-        .from("employees")
-        .select("id, name, email, phone, role")
-        .eq("id", params.id)
-        .single();
+    if (!params?.id) return;
 
-      if (error) {
-        console.error("Error fetching employee:", error.message);
-        setLoading(false);
-      } else {
-        setEmployee(data);
+    const fetchEmployee = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("employees")
+          .select("id, name, email, phone, role")
+          .eq("id", params.id)
+          .single();
+
+        if (error) {
+          console.error("❌ Error fetching employee:", error.message);
+          setLoading(false);
+        } else {
+          setEmployee(data);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("❌ Unexpected error fetching employee:", error);
         setLoading(false);
       }
     };
 
     fetchEmployee();
-  }, [params.id]);
+  }, [params?.id]);
 
   const handleDelete = async () => {
-    const { error } = await supabase
-      .from("employees")
-      .update({ status: "inactive" })
-      .eq("id", params.id);
+    if (!params?.id) return;
 
-    if (error) {
-      console.error("Error deleting employee:", error.message);
-    } else {
-      router.push("/employees");
+    try {
+      const { error } = await supabase
+        .from("employees")
+        .update({ status: "inactive" })
+        .eq("id", params.id);
+
+      if (error) {
+        console.error("❌ Error deleting employee:", error.message);
+      } else {
+        router.push("/employees");
+      }
+    } catch (error) {
+      console.error("❌ Unexpected error deleting employee:", error);
     }
   };
 
