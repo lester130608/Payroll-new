@@ -8,6 +8,7 @@ import PayrollFormTCM from "@/components/PayrollFormTCM";
 interface Employee {
   id: string;
   name: string;
+  employee_type: string;
 }
 
 export default function CreateTCMPayrollPage() {
@@ -16,16 +17,24 @@ export default function CreateTCMPayrollPage() {
 
   useEffect(() => {
     if (session?.user) {
-      getEmployeesForSupervisor(session.user.id, session.user.role).then((data: Employee[]) => {
-        setEmployees(data);
+      getEmployeesForSupervisor(session.user.id, session.user.role).then((employees) => {
+        setEmployees(employees);
       });
     }
   }, [session]);
 
+  const handleSave = (data: Employee[]) => {
+    console.log("TCM Payroll saved:", data);
+  };
+
+  const handleSubmit = (data: Employee[]) => {
+    console.log("TCM Payroll submitted:", data);
+  };
+
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
       <h1 className="text-3xl font-bold mb-6">Create TCM Payroll</h1>
-      <PayrollFormTCM employees={employees} />
+      <PayrollFormTCM employees={employees} onSave={handleSave} onSubmit={handleSubmit} />
     </div>
   );
 }
