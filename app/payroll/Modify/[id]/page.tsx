@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { getEmployeePayroll, updateEmployeePayroll, Payroll } from "@/lib/payrollService";
+import { getEmployeePayrollNew as getEmployeePayroll, updateEmployeePayrollNew as updateEmployeePayroll, Payroll } from "@/lib/payrollServiceNew";
 
 export default function ModifyPayrollPage() {
   const router = useRouter();

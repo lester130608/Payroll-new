@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { getEmployeesForSupervisor } from "../../../../lib/payrollService";
+import { getEmployeesForSupervisorNew } from "@/lib/payrollServiceNew"; // ✅ Nueva función
 import PayrollFormClinicians, { PayrollEntry } from "@/components/PayrollFormClinicians"; 
 
 interface Employee {
@@ -16,24 +16,21 @@ export default function CreateCliniciansPayrollPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
 
   useEffect(() => {
-    const userId = session?.user?.id;
-    const userRole = session?.user?.role;
+    if (!session?.user?.id || !session?.user?.role) return; // ✅ Verificación extra
 
-    if (userId && userRole) {
-      getEmployeesForSupervisor(userId, userRole)
-        .then((data: Employee[]) => setEmployees(data))
-        .catch((error) => console.error("Error al obtener empleados:", error));
-    }
+    getEmployeesForSupervisorNew(session.user.id, session.user.role)
+      .then((data: Employee[]) => setEmployees(data || [])) // ✅ Aseguramos que siempre haya un array
+      .catch((error) => console.error("❌ Error al obtener empleados:", error));
   }, [session?.user?.id, session?.user?.role]);
 
   const handleSave = (data: PayrollEntry[]) => {
-    console.log("Saving payroll data:", data);
-    // Aquí podrías agregar lógica para guardar en Supabase
+    console.log("💾 Saving payroll data:", data);
+    // 🔹 Lógica para guardar en Supabase
   };
 
   const handleSubmit = (data: PayrollEntry[]) => {
-    console.log("Submitting payroll data:", data);
-    // Aquí podrías agregar lógica para enviar los datos a una API
+    console.log("📤 Submitting payroll data:", data);
+    // 🔹 Lógica para enviar los datos a una API
   };
 
   return (

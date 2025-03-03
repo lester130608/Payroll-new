@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { supabase } from "@/lib/supabaseClient";
+import { createEmployeeNew } from "@/lib/payrollServiceNew"; // ✅ Usamos la nueva función
 import { useRouter } from "next/navigation";
 
 export default function CreateEmployeePage() {
@@ -57,19 +57,17 @@ export default function CreateEmployeePage() {
 
     console.log("✅ Supervisor ID Assigned:", supervisorId);
 
-    const { error } = await supabase.from("employees").insert([
-      {
-        name,
-        email,
-        phone,
-        status: "active",
-        employee_type: employeeType,
-        supervisor_id: supervisorId,
-      },
-    ]);
+    const success = await createEmployeeNew({
+      name,
+      email,
+      phone,
+      status: "active",
+      employee_type: employeeType,
+      supervisor_id: supervisorId,
+    });
 
-    if (error) {
-      console.error("❌ Error creating employee:", error.message);
+    if (!success) {
+      console.error("❌ Error creating employee.");
       setErrorMessage("Failed to create employee.");
     } else {
       router.push("/employees");

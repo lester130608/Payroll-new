@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getTotalPayroll, Payroll } from "@/lib/payrollService"; // 🔹 Importamos `Payroll`
+import { getTotalPayrollNew as getTotalPayroll, Payroll } from "@/lib/payrollServiceNew"; // 🔹 Importamos `Payroll`
 
 export default function GeneralPayrollPage() {
   const [payrollData, setPayrollData] = useState<Payroll[]>([]); // 🔹 Definir correctamente el tipo

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { supabase } from "@/lib/supabaseClient";
+import { getAllEmployeesNew } from "@/lib/payrollServiceNew";
 import Link from "next/link";
 
 interface Employee {
@@ -28,24 +28,11 @@ export default function EmployeesPage() {
         return;
       }
 
-      let query = supabase.from("employees").select("*").eq("status", "active");
-
-      if (session.user?.role && typeof session.user.role === "string") {
-        if (session.user.role === "supervisor_tcm") {
-          query = query.eq("employee_type", "tcm");
-        } else if (session.user.role === "supervisor_ba") {
-          query = query.in("employee_type", ["rbt", "bcba", "bcaba"]);
-        } else if (session.user.role === "supervisor_clinician") {
-          query = query.eq("employee_type", "clinicians");
-        }
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error("Error fetching employees:", error.message);
-      } else {
+      try {
+        const data = await getAllEmployeesNew(session.user.role, session.user.id);
         setEmployees(data || []);
+      } catch (error) {
+        console.error("❌ Error fetching employees:", error);
       }
     };
 

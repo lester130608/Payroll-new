@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getTotalPayroll, rejectPayrollEntry, approveAllPayroll, Payroll } from "@/lib/payrollService";
+import { 
+  getTotalPayrollNew as getTotalPayroll, 
+  rejectPayrollEntryNew as rejectPayrollEntry, 
+  approveAllPayrollNew as approveAllPayroll, 
+  Payroll 
+} from "@/lib/payrollServiceNew";
 
 export default function PayrollTotalPage() {
   const [payrollData, setPayrollData] = useState<Payroll[]>([]);
