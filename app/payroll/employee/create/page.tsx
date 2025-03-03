@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { getEmployeesForSupervisor } from "@/lib/payrollService";
+import { getEmployeesForSupervisor } from "../../../../lib/payrollService";
 import PayrollFormEmployee, { Employee, PayrollEntry } from "@/components/PayrollFormEmployee";
 
 export default function CreateEmployeePayrollPage() {

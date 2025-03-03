@@ -8,7 +8,7 @@
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",  // ✅ Corregido de "bundler" a "node"
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
@@ -19,6 +19,7 @@
       }
     ],
     "paths": {
+      "@/lib/*": ["lib/*"], // ✅ Rutas más específicas para evitar conflictos
       "@/*": ["./*"]
     }
   },
