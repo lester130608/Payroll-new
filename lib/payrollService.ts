@@ -1,4 +1,4 @@
-import { supabase } from "./supabaseClient";
+import { supabase } from "./supabaseClient"; // ✅ Asegurar que esta línea esté al inicio del archivo
 
 // 🔹 Definir interfaz para empleados
 export interface Employee {
@@ -40,115 +40,39 @@ export const getEmployeesForSupervisor = async (
 
   console.log("🔍 Buscando empleados para supervisor:", supervisorId, "Rol:", role);
 
-  const roleMapping: Record<string, string[]> = {
-    supervisor_ba: ["rbt", "bcba", "bcaba"],
-    supervisor_tcm: ["tcm"],
-    supervisor_clinician: ["clinicians"],
-    admin: ["employee"],
-  };
+  let query = supabase
+    .from("employees")
+    .select("id, name, employee_type, employment_type, supervisor_id, status, rate")
+    .eq("status", "active");
 
-  const employeeTypes = roleMapping[role];
+  if (role === "admin") {
+    query = query.eq("employee_type", "employee"); // ✅ Admin solo ve "employee"
+  } else {
+    const roleMapping: Record<string, string[]> = {
+      supervisor_ba: ["rbt", "bcba", "bcaba"],
+      supervisor_tcm: ["tcm"],
+      supervisor_clinician: ["clinicians"],
+    };
 
-  if (!employeeTypes) {
-    console.error("❌ Error: Rol no reconocido:", role);
-    return [];
+    const employeeTypes = roleMapping[role];
+
+    if (!employeeTypes) {
+      console.error("❌ Error: Rol no reconocido:", role);
+      return [];
+    }
+
+    query = query.in("employee_type", employeeTypes).eq("supervisor_id", supervisorId);
   }
 
-  try {
-    const { data, error } = await supabase
-      .from("employees")
-      .select("id, name, employee_type, employment_type, supervisor_id, status, rate")
-      .eq("status", "active")
-      .in("employee_type", employeeTypes)
-      .eq("supervisor_id", supervisorId);
+  const { data, error } = await query;
 
-    if (error) throw new Error(error.message);
-
-    return (data || []).map((emp) => ({
-      ...emp,
-      rate: emp.rate ?? 0,
-    }));
-  } catch (error) {
+  if (error) {
     console.error("❌ Error obteniendo empleados:", error);
     return [];
   }
-};
 
-// 🔍 Obtener Payroll de un empleado
-export const getEmployeePayroll = async (employeeId: string): Promise<Payroll[]> => {
-  if (!employeeId) {
-    console.error("❌ Error: employeeId no válido.");
-    return [];
-  }
-
-  console.log("🔍 Obteniendo Payroll para empleado:", employeeId);
-
-  try {
-    const { data, error } = await supabase
-      .from("payroll")
-      .select("*")
-      .eq("employee_id", employeeId);
-
-    if (error) throw new Error(error.message);
-
-    return data || [];
-  } catch (error) {
-    console.error("❌ Error obteniendo Payroll del empleado:", error);
-    return [];
-  }
-};
-
-// ✅ Actualizar datos de Payroll de un empleado
-export const updateEmployeePayroll = async (
-  payrollId: string,
-  updates: Partial<Payroll>
-): Promise<boolean> => {
-  if (!payrollId || !updates) {
-    console.error("❌ Error: payrollId o updates no válidos.");
-    return false;
-  }
-
-  console.log("📝 Actualizando Payroll con ID:", payrollId);
-
-  try {
-    const { error } = await supabase
-      .from("payroll")
-      .update(updates)
-      .eq("id", payrollId);
-
-    if (error) throw new Error(error.message);
-
-    console.log("✅ Payroll actualizado correctamente.");
-    return true;
-  } catch (error) {
-    console.error("❌ Error actualizando Payroll:", error);
-    return false;
-  }
-};
-
-// ❌ Rechazar un Payroll con motivo
-export const rejectPayrollEntry = async (payrollId: string, reason: string): Promise<boolean> => {
-  if (!payrollId || !reason) {
-    console.error("❌ Error: payrollId o reason no válidos.");
-    return false;
-  }
-
-  console.log("❌ Rechazando Payroll con ID:", payrollId, "Razón:", reason);
-
-  try {
-    const { error } = await supabase
-      .from("payroll")
-      .update({ status: "rejected", rejection_reason: reason })
-      .eq("id", payrollId);
-
-    if (error) throw new Error(error.message);
-
-    console.log("✅ Payroll rechazado correctamente.");
-    return true;
-  } catch (error) {
-    console.error("❌ Error rechazando Payroll:", error);
-    return false;
-  }
+  console.log("✅ Empleados encontrados:", data);
+  return data || [];
 };
 
 // 🔍 Obtener Payroll General con detalles de empleados y total_pay
@@ -192,28 +116,8 @@ export const getTotalPayroll = async (): Promise<Payroll[]> => {
   }
 };
 
-// ✅ Aprobar todos los Payroll pendientes
-export const approveAllPayroll = async (): Promise<boolean> => {
-  console.log("✅ Aprobando todos los Payroll pendientes...");
-
-  try {
-    const { data, error } = await supabase
-      .from("payroll")
-      .update({ status: "approved" })
-      .eq("status", "pending")
-      .select();
-
-    if (error) throw new Error(error.message);
-
-    if (!data || data.length === 0) {
-      console.warn("⚠️ No hay payrolls pendientes por aprobar.");
-      return false;
-    }
-
-    console.log(`✅ ${data.length} Payrolls han sido aprobados.`);
-    return true;
-  } catch (error) {
-    console.error("❌ Error aprobando Payroll:", error);
-    return false;
-  }
+// ✅ Exportamos todas las funciones correctamente
+export {
+  getEmployeesForSupervisor,
+  getTotalPayroll, // ✅ Asegura que `getTotalPayroll` está exportado correctamente
 };

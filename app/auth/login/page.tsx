@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
+import "./style.css"; // ✅ Importar los estilos
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
